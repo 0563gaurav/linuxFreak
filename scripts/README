@@ -1,0 +1,128 @@
+/*This file contains Administratative detail of the project scripts. */
+/* lfs-systemd-10.0 */
+DSICLAMER:
+	  --These script are valid only for lfs version 10.0 and I am using systemd initilisation system.
+	  --To run these script you have root privilages.
+
+CAUTION:
+
+	 -- DO'T FALLOW THESE INTRUCTION BLINDLY 
+	 --TYPE COMMAND ON TERMINAL ONLY IF YOU AWARE OF USAGE OF PARTICULAR COMMAND ( specially when you not using any VMM( virtual  machine             manager eg: Virtualbox, VMware, qemu-virt-manager(only linux), Hyper-V(Microsoft) or container(lxd/lxc or docker )
+	 --TYPING COMMAND ON TERMINAL WITHOUT PRECAUTION COULD HURT/DAMAGE**  YOU HOST SYSTEM
+
+
+NOTE: This project is devided into 3 sections
+
+
+
+
+
+[SECTION 1]
+
+
+ 
+script 1: Host_preperation.sh  ---> This stage is also called as pre-build. this script is devided into 3 parts
+				Part 1: (Preparing the Host System )
+					--Host-system-requirments
+					--creating hard-disk partition 
+					--creating filesystem on the partition( formatting disk)
+					--setting up $LFS Veriable
+					--mounting this patiion under /mnt  dir 
+				Part 2: ( Package and patches) 
+					--patching the packeges if required 
+
+
+				Part 3: (Final Preparations)
+					--Creating a limited directory layout 
+					--adding user on host machine 
+					--setting up environment
+						--creting .bashrc and .bash_profile in users home directory
+				
+
+
+[OPTIONAL ]
+
+script 2: Version-check.sh --> If you are a already running linux distribution on you machine then you can check verion of software required for this lfs project.
+
+				
+
+
+[SECTION 2]
+
+				                                                                                                                                       script 3: Build_temporary_cross_toolchain.sh -->This contains 2 part 
+					
+				 Part 1: ( pass 1)
+					--compiling Binutils-2.35 (pass 1)
+					--compiling GCC-10.2.0 - (pass 1)
+					-- install Linux-5.8.3 API Headers 
+					--compiling Glibc-2.32 
+					--compiling Libstdc++ from GCC-10.2.0 (pass 1)
+                             -----------compiling temporary tools-------                                                                                         						--compiling M4-1.4.18 
+					--compiling Ncurses-6.2 
+					--compiling Bash-5.0
+					--compiling Coreutils-8.32
+					--compiling Diffutils-3.7
+					--compiling File-5.39
+					--compiling Gawk-5.1.0
+					--compiling Grep-3.4
+					--compiling Gzip-1.10
+					--compiling Make-4.3
+					--compiling Patch-2.7.6
+					--compiling Sed-4.8
+					--compiling Tar-1.32
+					--compiling Xz-5.2.5
+				Part 2: (pass2 )
+					--compiling Binutils-2.35 -pass 2
+					--compiling GCC-10.2.0 -pass 2
+
+script 4: Entering_chroot_env.sh --> Entering the Chroot Environment and building Additional  Temporary tools 
+					--changing Ownership
+					--Preparing Virtual Kernel File Systems (/proc, /sys /run /dev)
+					--Entering the Chroot Environment 
+					--creating Directory Hierarchy
+					--Creating essential Files and symlinks 
+					--compiling Libstdc++ from GCC-10.2.0, pass 2
+					--compiling Gettext-0.21
+					--compiling Bison-3.7.1
+					--compiling Perl-5.32.0
+					--compiling Python-3.8.5
+					--compiling Texinfo-6.7
+					--compiling Util-linux-2.36
+                             --Cleaning and saving the temporary system-----
+
+
+
+[SECTION 3]
+
+
+                                 
+
+script 5: Installing_Basic_system_software.sh -->
+
+
+
+
+
+
+                                  
+script 6: System_Configuration.sh --> 	
+					--installing lfs-bootscripts 
+
+
+
+                                                                                    
+Making_lfs_Bootable.sh --> 
+					--Creating /etc/fstab file 
+					--compiling the kernee - Linux-5.8.3
+					--using GRUB to set up the boot process
+				 
+script 8: The_end_and_beyond.sh -->  
+
+
+
+
+/*Written by */
+Mr. Gaurav Gautam Shakya
+Electrical engineer
+Linux administrator 
+EMAIL: <hkrgs1234@gmail.com> 

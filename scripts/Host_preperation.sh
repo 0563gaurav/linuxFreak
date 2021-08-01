@@ -1,4 +1,6 @@
 DISCLAMER: /* You should have root privilages to follow this guide */
+/* Type these commands on terminal only when you exactly know  what these commands do and when these commnads needed */
+/* without above  precoution this might hurt/damage you host system */
 
 #satisfying host requirments
 
@@ -47,27 +49,34 @@ DISCLAMER: /* You should have root privilages to follow this guide */
 # setting up environment ( creating .bashrc and .profile file in lfs home dir)
 #creating .profile file in lfs user home dir 
 	cat >~/.profile <<"EOF"
-	exec env -i HOME=$HOEM 
-	TERM=$TERM 
-	PS1='\u:\w\$ ' /bin/bash 
+	exec env -i HOME=$HOEM \
+	TERM=$TERM  \
+	PS1='\u:\w\$ ' /bin/bash \
 	EOF
 
 #creating .bashrc file in user's home dir 
 	cat >~/,bashrc <<"EOF"
-	set +h
-	umask 022
-	LFS=/mnt/lfs
-	LC_ALL=POSIX
-	LFS_TGT=$(uname -r)-lfs-linux-gnu
-	PATH=$LFS/tools:$PATH
-	export LFS LC_ALL LFS_TGT PATH
+	set +h    \
+	umask 022  \
+	LFS=/mnt/lfs  \
+	LC_ALL=POSIX  \
+	LFS_TGT=$(uname-r)-lfs-linux-gnu    \
+	PATH=$LFS/tools:$PATH            \
+	export LFS LC_ALL LFS_TGT PATH       \
 	EOF
 
+#After setting the environment logout and relogin into the lfs account 
+	exit
+	su lfs
 
 
 
 
 
-
-
+/*Author*/
+Gaurav Gautam Shakya
+Electrical Engineer 
+Linx administrator
+email <hkrgs1234gmail.com>
+Happy Learning ....
 
