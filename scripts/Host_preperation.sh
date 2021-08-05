@@ -2,6 +2,8 @@ DISCLAMER: /* You should have root privilages to follow this guide */
 /* Type these commands on terminal only when you exactly know  what these commands do and when these commnads needed */
 /* without above  precoution this might hurt/damage you host system */
 
+ehco "Type command maually , copy from this file and modify accoeding your system paramaters"
+sleep 
 #satisfying host requirments
 
 #install all the required software manually

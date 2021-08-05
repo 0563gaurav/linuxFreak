@@ -5,6 +5,10 @@
 #And all the sources are in the $LFS/sources dir (extracted)
 #lfs user must have full control on $LFS/sources dir 
 
+export LFS=/mnt/lfs
+su lfs
+
+cd $LFS/sources
 
 #/*start compiling toolchain */
 
@@ -14,7 +18,7 @@ sleep 5
 #/*Binutils*/
 echo "Binutils is being compiled"
 sleep 5
-cd $LFS/sources
+
 tar -xvf binutils-2.35.tar.xz
 cd binutils-2.35
 mkdir build
