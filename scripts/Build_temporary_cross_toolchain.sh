@@ -6,6 +6,7 @@
 #lfs user must have full control on $LFS/sources dir 
 
 export LFS=/mnt/lfs
+cd $LFS/sources
 
 #/*start compiling toolchain */
 
@@ -18,7 +19,7 @@ sleep 5
 
 tar -xvf binutils-2.35.tar.xz
 cd binutils-2.35
-mkdir build
+mkdir -pv build
 cd build
 ../configure --prefix=$LFS/tools \
 	--with-sysroot=$LFS 	 \
@@ -66,7 +67,8 @@ cd build
 ../configure --target=$LFS_TGT	\
 	--prefix=$LFS/tools	\
 	--with-glibc-version=2.11 \
-	--with-sysroot=$LFS	  \
+	--
+with-sysroot=$LFS	  \
 	--with-newlib		  \
 	--without-headers	  \
 	--enable-initfini-array	  \
@@ -79,7 +81,7 @@ cd build
 	--disable-libgomp	  \
 	--disable-libquadmath	  \
 	--disable-libssp	  \
-	--disbale-libvtv	  \
+	--disable-libvtv	  \
 	--disable-libstdcxx	  \
 	--enable-lanuages=c,c++
 make -j8

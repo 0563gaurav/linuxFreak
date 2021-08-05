@@ -50,8 +50,8 @@ sleep
 	
 # setting up environment ( creating .bashrc and .profile file in lfs home dir)
 #creating .profile file in lfs user home dir 
-	cat >~/.profile <<"EOF"
-	exec env -i HOME=$HOEM \
+	cat > ~/.profile <<"EOF"
+	exec env -i HOME=$HOME \
 	TERM=$TERM  \
 	PS1='\u:\w\$ ' /bin/bash \
 	EOF
