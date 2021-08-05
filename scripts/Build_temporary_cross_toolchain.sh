@@ -6,9 +6,6 @@
 #lfs user must have full control on $LFS/sources dir 
 
 export LFS=/mnt/lfs
-su lfs
-
-cd $LFS/sources
 
 #/*start compiling toolchain */
 
