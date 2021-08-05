@@ -67,8 +67,7 @@ cd build
 ../configure --target=$LFS_TGT	\
 	--prefix=$LFS/tools	\
 	--with-glibc-version=2.11 \
-	--
-with-sysroot=$LFS	  \
+	--with-sysroot=$LFS	  \
 	--with-newlib		  \
 	--without-headers	  \
 	--enable-initfini-array	  \
@@ -88,7 +87,7 @@ make -j8
 make install
 #Note 
 cd ../
-cat gcc/limitx.h gcc/glimits.h gcc/limity.h \
+cat gcc/limitx.h gcc/glimits.h gcc/limity.h > \
 	`dirname $($LFS_TGT-gcc -print-libgcc-file-name) ` /install-tools/include/limits.h
 
 cd ../
