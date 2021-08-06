@@ -136,3 +136,193 @@ chmod -v 600 /var/log/btmp
 #-----------------------------------------------------------------------------------------------------------------------------------------------#
 #/*Libstdc++ from GCC-10.2.0, Pass 2 */
 
+echo "Building Extra Temporary tools ..."
+echo "Building Libstdc++ from GCC-10.2.0 , PASS-2"
+sleep 3
+tar -xvf gcc-10.2.0.tar.xz
+cd gcc-10.2.0
+#Create a link which exists when building libstdc++ in the gcc tree:
+ln -s gthr-posix.h libgcc/gthr-default.h
+mkdir -pv build
+cd build 
+../libstdc++-v3/configure CXXFLAGS="-g -O2 -D_GNU_SOURCE"	\
+			--prefix=/usr		\
+			--disable-multilib	\
+			--disable-nls		\
+			--host=$(uname -m)-lfs-linux-gnu	\
+			--disable-libstdcxx-pch 
+
+make -j$(nporc)
+make install
+
+cd ../../
+rm -rf gcc-10.2.0
+#/*Gettext-0.21 */
+
+
+echo "Building Gettext-0.21 ...."
+sleep 3
+tar -xvf gettext-0.21.tar.xz
+cd gettext-0.21
+./configure --disable-shared
+make -j$(nporc)
+#Install the msgfmt, msgmerge, and xgettext programs:
+cp -v gettext-tools/src/{msgfmt,msgmerge,xgettext} /usr/bin
+
+cd ../
+rm -rf gettext-0.21
+
+
+#/*Bison-3.7.1 */
+echo " Building Bison-3.7.1 ..."
+sleep 3
+tar -xvf bison-3.7.1.tar.xz
+cd bison-3.7.1
+./configure --prefix=/usr \
+	--docdir=/usr/share/doc/bison-3.7.1
+make -j$(nproc)
+make install
+
+
+cd ../
+rm -rf bison-3.7.1
+
+
+#/* Perl-5.32.0  */
+echo "Building Perl-5.32.0 ...."
+sleep 3
+
+tar -xvf perl-5.32.0.tar.xz
+cd perl-5.32.0
+sh Configure -des					\
+	-Dprefix=/usr					\
+	-Dvendorprefix=/usr				\
+	-Dprivlib=/usr/lib/perl5/5.32/core_perl		\
+	-Darchlib=/usr/lib/perl5/5.32/core_perl		\
+	-Dsitelib=/usr/lib/perl5/5.32/site_perl		\
+	-Dsitearch=/usr/lib/perl5/5.32/site_perl	\
+	-Dvendorlib=/usr/lib/perl5/5.32/vendor_perl 	\
+	-Dvendorarch=/usr/lib/perl5/5.32/vendor_perl
+
+make -j$(nporc)
+make install
+
+cd ../
+rm -rf perl-5.32.0
+
+
+#/*Python-3.8.5 */
+echo "Building Python-3.8.5 ..."
+sleep 3
+tar -xvf   Python-3.8.5.tar.xz 
+cd   Python-3.8.5.
+./configure --prefix=/usr	\
+	--enable-shared		 \
+	--without-ensurepip
+
+make -j$(nproc)
+make install
+
+cd ../
+rm -rf python-3.8.5-docs-html
+
+#/* Texinfo-6.7 */
+echo " Building Texinfo-6.7 ..."
+sleep 3
+tar -xvf texinfo-6.7.tar.xz
+cd texinfo-6.7
+./configure --prefix=/usr
+make -j(nproc)
+make install
+
+
+cd ../
+rm -rf texinfo-6.7
+
+#/*Util-linux-2.36 */
+echo "Building Util-linux-2.36 ..."
+sleep 3
+
+#First create a directory to enable storage for the hwclock program:
+mkdir -pv /var/lib/hwclock
+
+#Prepare Util-linux for compilation:
+
+tar -xvf util-linux-2.36.tar.xz
+cd util-linux-2.36
+
+./configure ADJTIME_PATH=/var/lib/hwclock/adjtime	\
+		--docdir=/usr/share/doc/util-linux-2.36 \
+		--disable-chfn-chsh 			\
+		--disable-login				\
+		--disable-nologin			\
+		--disable-su				\
+		--disable-setpriv			\
+		--disable-runuser			\
+		--disable-pylibmount 			\
+		--disable-static			\
+		--without-python
+
+make -j$(nproc)
+make install
+
+cd ../
+rm -rf util-linux-2.36
+
+
+#/* Cleaning up and Saving the Temporary System  */
+
+echo "Cleaning up and Saving the Temporary System ..."
+sleep 3
+
+#The libtool .la files are only useful when linking with static libraries. They are unneeded, and potentially harmful, when
+#using dynamic shared libraries, specially when using non-autotools build systems. While still in chroot, remove those
+#files now:
+find /usr/{lib,libexec} -name \*.la -delete#
+
+#Remove the documentation of the temporary tools, to prevent them from ending up in the final system, and save about 35 MB:
+rm -rf /usr/share/{info,man,doc}/*
+
+
+#All of the following instructions are executed by root. Take extra care about the commands you're going to
+#run as mistakes here can modify your host system. Be aware that the environment variable LFS is set for user
+#lfs by default but it might not be set for root. Whenever commands are to be executed by root, make
+#sure you have set LFS accordingly. This has been discussed in Section 2.6, "Setting The $LFS Variable"
+exit
+umount $LFS/dev{/pts,}
+umount $LFS/{sys,proc,run}
+
+
+#/*Stripping */
+#Strip off debugging symbols from binaries:
+echo "Strip off debugging symbols from binaries: ..."
+trip --strip-debug $LFS/usr/lib/*
+strip --strip-unneeded $LFS/usr/{,s}bin/*
+strip --strip-unneeded $LFS/tools/bin/*
+#------------------------------------------------backup and restore the system instruction -----------------------------------------------------------#
+
+#NOTE---> If you want to backup or restore system uncomment the appropriate commands .
+
+#/*Backup */
+#Make sure you have at least 600 MB free disk space (the source tarballs will be included in the backup archive) in the
+#home directory of user root.
+#Create the backup archive by running the following command:
+
+
+#cd $LFS &&
+#tar -cJpf $HOME/lfs-temp-tools-10.0-systemd.tar.xz .
+
+#/* Restore */
+#In case some mistakes have been made and you need to start over, you can use this backup to restore the temporary
+#tools and save some recovery time. Since the sources are located under $LFS, they are included in the backup archive
+#as well, so they do not need to be downloaded again. After checking that $LFS is set properly, restore the backup by
+#executing the following commands
+
+
+
+
+#echo "Restoring the system ..."
+#sleep 3
+#cd $LFS &&
+#rm -rf ./* &&
+#tar -xpf $HOME/lfs-temp-tools-10.0-systemd.tar.xz

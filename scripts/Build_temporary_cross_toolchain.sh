@@ -128,11 +128,13 @@ case $(uname -r) in
 esac 
 
 
-#?patching the glibc
-patch -Np1 -i ../glibc-2.32-fhs-1.patch 2> $LOG/err
+
 
 tar -xvf glibc-2.32.tar.xz 2>$LOG/err
 cd glibc-2.32
+#Patching the glibc
+patch -Np1 -i ../glibc-2.32-fhs-1.patch
+
 mkdir -v build
 cd build
 ../configure   			\
