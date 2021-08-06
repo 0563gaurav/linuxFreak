@@ -245,4 +245,930 @@ ln -sfv ../../lib/$(readlink /usr/lib/libz.so) /usr/lib/libz.so
 
 
 #/*Bzip2-1.0.8 */
+echo "Installing Bzip2-1.0.8 ..."
+sleep 3
+tar -xvf bzip2-1.0.8.tar.gz
+cd bzip2-1.0.8
+echo "Patching Bzip2-1.0.8 ..."
+patch -Np1 -i ../bzip2-1.0.8-install_docs-1.patch
+#The following command ensures installation of symbolic links are relative
+sed -i 's@\(ln -s -f \)$(PREFIX)/bin/@\1@' Makefile
+#Ensure the man pages are installed into the correct location:
+sed -i "s@(PREFIX)/man@(PREFIX)/share/man@g" Makefile
+#Prepare Bzip2 for compilation with:
+make -f Makefile-libbz2_so
+make clean
+make 
+make PREFIX=/usr install
+#nstall the shared bzip2 binary into the /bin directory, make some necessary symbolic links, and clean up:
+cp -v bzip2-shared /bin/bzip2
+cp -av libbz2.so* /lib
+ln -sv ../../lib/libbz2.so.1.0 /usr/lib/libbz2.so
+rm -v /usr/bin/{bunzip2,bzcat,bzip2}
+ln -sv bzip2 /bin/bunzip2
+ln -sv bzip2 /bin/bzcat
+
+cd ../
+rm -rf bzip2-1.0.8
+
+
+#/* Xz-5.2.5 */
+echo "Installing Xz-5.2.5 ..."
+sleep 2
+tar -xvf xz-5.2.5.tar.xz
+cd xz-5.2.5
+./configure --prefix=/usr		\
+	--disable-static 		\
+	--docdir=/usr/share/doc/xz-5.2.5
+make -j$(nproc)
+make check
+make install
+mv -v
+/usr/bin/{lzma,unlzma,lzcat,xz,unxz,xzcat} /bin
+mv -v /usr/lib/liblzma.so.* /lib
+ln -svf ../../lib/$(readlink /usr/lib/liblzma.so) /usr/lib/liblzma.so
+
+
+cd ../
+rm -rf xz-5.2.5
+
+
+#/* Zstd-1.4.5 */
+echo "Installing Zstd-1.4.5  ..."
+sleep 2
+tar -xvf zstd-1.4.5.tar.gz 
+cd zstd-1.4.5
+make -j$(nproc)
+make prefix=/usr install
+#Remove the static library and move the shared library to /lib. Also, the .so file in /usr/lib will need to be recreated
+rm -v /usr/lib/libzstd.a
+mv -v /usr/lib/libzstd.so.* /lib
+ln -sfv ../../lib/$(readlink /usr/lib/libzstd.so) /usr/lib/libzstd.so
+
+cd ../
+rm -rf zstd-1.4.5
+
+
+#/* File-5.39 */
+echo "Installing File-5.39 ..."
+sleep 2
+tar -xvf file-5.39.tar.gz
+cd file-5.39
+./configure --prefix=/usr
+make -j$(nproc)
+make check 
+make install
+
+cd ../
+rm -rf file-5.39
+
+
+#/* Readline-8.0 */
+echo "Installing Readline-8.0 ..."
+sleep 2
+tar -xvf readline-8.0.tar.gz
+cd readline-8.0
+#Reinstalling Readline will cause the old libraries to be moved to <libraryname>.old. While this is normally not a
+#problem, in some cases it can trigger a linking bug in ldconfig. This can be avoided by issuing the following two sed
+sed -i '/MV.*old/d' Makefile.in
+sed -i '/{OLDSUFF}/c:' support/shlib-install
+
+./configure --prefix=/usr		\
+	--disable-static		 \
+	--with-curses			\
+	--docdir=/usr/share/doc/readline-8.0
+make SHLIB_LIBS="-lncursesw"
+make SHLIB_LIBS="-lncursesw" install
+#Now move the dynamic libraries to a more appropriate location and fix up some permissions and symbolic links:
+mv -v /usr/lib/lib{readline,history}.so.* /lib
+chmod -v u+w /lib/lib{readline,history}.so.*
+ln -sfv ../../lib/$(readlink /usr/lib/libreadline.so) /usr/lib/libreadline.so
+ln -sfv ../../lib/$(readlink /usr/lib/libhistory.so ) /usr/lib/libhistory.so
+#If desired, install the documentation
+install -v -m644 doc/*.{ps,pdf,html,dvi} /usr/share/doc/readline-8.0
+
+
+cd ../
+rm -rf readline-8.0
+
+
+
+#/* M4-1.4.18 */
+echo "Installing M4-1.4.18 ..."
+sleep 3
+tar -xvf m4-1.4.18.tar.xz
+cd m4-1.4.18
+#First, make some fixes required by glibc-2.28 and later:
+sed -i 's/IO_ftrylockfile/IO_EOF_SEEN/' lib/*.c
+echo "#define _IO_IN_BACKUP 0x100" >> lib/stdio-impl.h
+./configure --prefix=/usr
+make -j$(nproc)
+make check 
+make install
+
+cd ../
+rm -rf m4-1.4.18
+
+
+
+#/*Bc-3.1.5 */
+echo "Installing Bc-3.1.5 ..."
+sleep 2
+tar -xvf bc-3.1.5.tar.xz
+cd bc-3.1.5
+PREFIX=/usr CC=gcc CFLAGS="-std=c99" ./configure.sh -G -O3
+make -j$(nproc)
+make test
+make install
+
+
+cd ../
+rm -rf bc-3.1.5
+
+#/* Flex-2.6.4 */
+echo "Installing Flex-2.6.4 ..."
+sleep 2
+tar -xvf flex-2.6.4.tar.gz
+cd flex-2.6.4
+./configure --prefix=/usr --docdir=/usr/share/doc/flex-2.6.4
+make  -j$(nproc)
+make check
+make install
+#A few programs do not know about flex yet and try to run its predecessor, lex. To support those programs, create a
+#symbolic link named lex that runs flex in lex emulation mode:
+ln -sv flex /usr/bin/lex
+
+cd ../
+rm -rf flex-2.6.4
+
+
+#/* Binutils-2.35 */
+echo "Installing Binutils-2.35 ..."
+sleep 2
+tar -xvf binutils-2.35.tar.xz
+cd binutils-2.35
+echo "Verify that the PTYs are working properly inside the chroot environment by performing a simple test: "
+expect -c "spawn ls"
+
+#Now remove one test that prevents the tests from running to completion:
+sed -i '/@\tincremental_copy/d' gold/testsuite/Makefile.in
+mkdir -pv build
+cd build
+../configure --prefix=/usr		\
+		--enable-gold		\
+		--enable-ld=default	\
+		--enable-plugins	\
+		--enable-shared		\
+		--disable-werror	\
+		--enable-64-bit-bfd	\
+		--with-system-zlib
+make tooldir=/usr
+echo "The test suite for Binutils in this section is considered critical. Do not skip it under any circumstances."
+make -k check
+make tooldir=/usr install
+
+
+cd ../..
+rm -rf binutils-2.35
+
+
+#/* GMP-6.2.0 */
+echo "Installing GMP-6.2.0 ..."
+sleep 2
+tar -xvf gmp-6.2.0.tar.xz
+cd gmp-6.2.0
+
+#If you are building for 32-bit x86, but you have a CPU which is capable of running 64-bit code and you
+#have specified CFLAGS in the environment, the configure script will attempt to configure for 64-bits and fail.
+#Avoid this by invoking the configure command below with
+ABI=32 ./configure ...
+#The default settings of GMP produce libraries optimized for the host processor. If libraries suitable for
+#processors less capable than the host's CPU are desired, generic libraries can be created by running the
+#following:
+cp -v configfsf.guess config.guess
+cp -v configfsf.sub config.sub
+
+./configure --prefix=/usr		\
+	--enable-cxx			\
+	--disable-static 		\
+	--docdir=/usr/share/doc/gmp-6.2.0
+
+make -j$(nproc)
+make html
+echo "The test suite for GMP in this section is considered critical. Do not skip it under any circumstances"
+make check 2>&1 | tee gmp-check-log
+echo "Ensure that all 197 tests in the test suite passed. Check the results by issuing the following command:"
+awk '/# PASS:/{total+=$3} ; END{print total}' gmp-check-log
+echo "Install the package and its documentation:"
+make install
+make install-html
+
+cd ../
+rm -rf gmp-6.2.0
+
+
+#/* MPFR-4.1.0 */
+echo " Installing MPFR-4.1.0 ..."
+sleep 2
+tar -xvf mpfr-4.1.0.tar.xz
+cd mpfr-4.1.0
+./configure --prefix=/usr		\
+	--disable-static		\
+	--enable-thread-safe	 	\
+	--docdir=/usr/share/doc/mpfr-4.1.0
+make
+make html
+echo "The test suite for MPFR in this section is considered critical. Do not skip it under any circumstances"
+make check
+echo "Install the package and its documentation:"
+make install
+make install-html
+
+cd ../
+rm -rf mpfr-4.1.0
+
+
+
+#/* MPC-1.1.0 */
+echo "Installing MPC-1.1.0 ..."
+sleep 2
+tar -xvf mpc-1.1.0.tar.gz
+cd mpc-1.1.0
+./configure --prefix=/usr		\
+	--disable-static 		\
+	--docdir=/usr/share/doc/mpc-1.1.0
+make
+make html
+echo "To test the results, issue:"
+make check 
+make install
+make install-html
+
+
+cd ../
+rm -rf mpc-1.1.0
+
+
+#/* Attr-2.4.48 */
+echo "Installing Attr-2.4.48 ..."
+sleep 2
+tar -xvf attr-2.4.48.tar.gz
+cd attr-2.4.48
+./configure --prefix=/usr		\
+	--disable-static		 \
+	--sysconfdir=/etc 		 \
+	--docdir=/usr/share/doc/attr-2.4.48
+make 
+#The tests need to be run on a filesystem that supports extended attributes such as the ext2, ext3, or ext4 filesystems.
+#To test the results, issue:
+make check 
+make install
+echo "The shared library needs to be moved to /lib, and as a result the .so file in /usr/lib will need to be recreated"
+mv -v /usr/lib/libattr.so.* /lib
+ln -sfv ../../lib/$(readlink /usr/lib/libattr.so) /usr/lib/libattr.so
+
+
+cd ../
+rm -rf attr-2.4.48
+
+
+#/* Acl-2.2.53 */
+echo "Installing Acl-2.2.53 ..."
+sleep 2
+tar -xvf acl-2.2.53.tar.gz
+cd acl-2.2.53
+./configure --prefix=/usr		\
+	--disable-static		\
+	--libexecdir=/usr/lib 		\
+	--docdir=/usr/share/doc/acl-2.2.53
+make 
+make install
+#The shared library needs to be moved to /lib, and as a result the .so file in /usr/lib will need to be recreated:
+mv -v /usr/lib/libacl.so.* /lib
+ln -sfv ../../lib/$(readlink /usr/lib/libacl.so) /usr/lib/libacl.so
+
+
+cd ../
+rm -rf acl-2.2.53
+
+
+#/* Libcap-2.42 */
+echo "Installing Libcap-2.42 ..."
+sleep 2
+tar -xvf libcap-2.42.tar.xz
+cd libcap-2.42
+echo "Prevent a static library from being installed:"
+sed -i '/install -m.*STACAPLIBNAME/d' libcap/Makefile
+make lib=lib
+echo "To test the results, issue:"
+make test
+echo "Install the package and do some cleanup:"
+make lib=lib PKGCONFIGDIR=/usr/lib/pkgconfig install
+chmod -v 755 /lib/libcap.so.2.42
+mv -v /lib/libpsx.a /usr/lib
+rm -v /lib/libcap.so
+ln -sfv ../../lib/libcap.so.2 /usr/lib/libcap.so
+
+cd ../
+rm -rf libcap-2.42
+
+#/* Shadow-4.8.1 */
+echo "Installing Shadow-4.8.1 ..."
+sleep 2
+tar -xvf shadow-4.8.1.tar.xz
+cd shadow-4.8.1
+echo "Disable the installation of the groups program and its man pages, as Coreutils provides a better version"
+sed -i 's/groups$(EXEEXT) //' src/Makefile.in
+find man -name Makefile.in -exec sed -i 's/groups\.1 / /' {} \;
+find man -name Makefile.in -exec sed -i 's/getspnam\.3 / /' {} \;
+find man -name Makefile.in -exec sed -i 's/passwd\.5 / /' {} \;
+
+#If you chose to build Shadow with Cracklib support, run the following:
+sed -i 's:DICTPATH.*:DICTPATH\t/lib/cracklib/pw_dict:' etc/login.defs
+echo "Make a minor change to make the first group number generated by useradd 1000:"
+sed -i 's/1000/999/' etc/useradd
+echo "Prepare Shadow for compilation:"
+touch /usr/bin/passwd
+./configure --sysconfdir=/etc	 \
+	--with-group-name-max-length=32
+make 
+make install
+echo "Configuring Shadow"
+echo "To enable shadowed passwords, run the following command:"
+pwconv
+echo "To enable shadowed group passwords, run:"
+grpconv
+echo "Setting the root password"
+passwd root
+
+cd ../
+rm -rf shadow-4.8.1
+
+
+#/* GCC-10.2.0 */
+echo "Installing GCC-10.2.0 ..."
+sleep 2
+tar -xvf gcc-10.2.0.tar.xz
+cd gcc-10.2.0
+#If building on x86_64, change the default directory name for 64-bit libraries to lib:
+case $(uname -m) in
+x86_64)
+sed -e '/m64=/s/lib64/lib/' \
+	-i.orig gcc/config/i386/t-linux64	;;
+esac
+
+mkdir -pv build 
+cd build 
+../configure --prefix=/usr  		\
+		LD=ld			\
+		--enable-languages=c,c++	\
+		--disable-multilib		\
+		--disable-bootstrap		\
+		--with-system-zlib
+
+make -j$(nproc)
+ulimit -s 32768
+echo "Test the results as a non-privileged user, but do not stop at errors:"
+chown -Rv tester .
+su tester -c "PATH=$PATH make -k check"
+echo "To receive a summary of the test suite results, run:"
+../contrib/test_summary
+
+echo "Install the package and remove an unneeded directory:"
+make install
+rm -rf /usr/lib/gcc/$(gcc -dumpmachine)/10.2.0/include-fixed/bits/
+echo "The GCC build directory is owned by tester now and the ownership of the installed header directory (and its
+content) will be incorrect. Change the ownership to root user and group:"
+chown -v -R root:root \
+/usr/lib/gcc/*linux-gnu/10.2.0/include{,-fixed}
+echo "Create a symlink required by the FHS for "historical" reasons."
+ln -sv ../usr/bin/cpp /lib
+echo "Add a compatibility symlink to enable building programs with Link Time Optimization (LTO):"
+install -v -dm755 /usr/lib/bfd-plugins
+ln -sfv ../../libexec/gcc/$(gcc -dumpmachine)/10.2.0/liblto_plugin.so \
+	/usr/lib/bfd-plugins/
+#Now that our final toolchain is in place, it is important to again ensure that compiling and linking will work as expected.
+echo " performing some sanity checks:"
+echo 'int main(){}' > dummy.c
+cc dummy.c -v -Wl,--verbose &> dummy.log
+readelf -l a.out | grep ': /lib'
+
+echo "Now make sure that we're setup to use the correct start files:"
+grep -o '/usr/lib.*/crt[1in].*succeeded' dummy.log
+echo "Verify that the compiler is searching for the correct header files:"
+grep -B4 '^ /usr/include' dummy.log
+echo " verifying  that the new linker is being used with the correct search paths:"
+grep 'SEARCH.*/usr/lib' dummy.log |sed 's|; |\n|g'
+echo "make sure that we're using the correct libc:"
+grep "/lib.*/libc.so.6 " dummy.log
+echo "Make sure GCC is using the correct dynamic linker:"
+grep found dummy.log
+echo "Once everything is working correctly, clean up the test files"
+rm -v dummy.c a.out dummy.log
+#Finally, move a misplaced file:
+mkdir -pv /usr/share/gdb/auto-load/usr/lib
+mv -v /usr/lib/*gdb.py /usr/share/gdb/auto-load/usr/lib
+
+cd ../../
+rm -rf gcc-10.2.0
+
+
+#/* Pkg-config-0.29.2 */
+echo "Installing Pkg-config-0.29.2 ..."
+sleep 2
+tar -xvf pkg-config-0.29.2.tar.gz
+cd pkg-config-0.29.2
+./configure --prefix=/usr		\
+	--with-internal-glib		\
+	--disable-host-tool		\
+	--docdir=/usr/share/doc/pkg-config-0.29.2
+
+make 
+make check
+make install
+
+cd ../
+rm -rf pkg-config-0.29.2
+  
+
+#/*Ncurses-6.2 */
+echo "Installing Ncurses-6.2 ..."
+sleep 2
+tar -xvf ncurses-6.2.tar.gz
+cd ncurses-6.2
+#Don't install a static library that is not handled by configure:
+sed -i '/LIBTOOL_INSTALL/d' c++/Makefile.in
+#Prepare Ncurses for compilation:
+./configure --prefix=/usr		\
+	--mandir=/usr/share/man		\
+	--with-shared			\
+	--without-debug			\
+	--without-normal		\
+	--enable-pc-files		\
+	--enable-widec
+make 
+make install
+#Move the shared libraries to the /lib directory, where they are expected to reside:
+mv -v /usr/lib/libncursesw.so.6* /lib
+#Because the libraries have been moved, one symlink points to a non-existent file. Recreate it:
+ln -sfv ../../lib/$(readlink /usr/lib/libncursesw.so) /usr/lib/libncursesw.so
+#Many applications still expect the linker to be able to find non-wide-character Ncurses libraries. Trick such applications
+#into linking with wide-character libraries by means of symlinks and linker scripts
+for lib in ncurses form panel menu ; do
+rm -vf	/usr/lib/lib${lib}.so
+echo "INPUT(-l${lib}w)" > /usr/lib/lib${lib}.so
+ln -sfv ${lib}w.pc  /usr/lib/pkgconfig/${lib}.pc
+done
+
+#Finally, make sure that old applications that look for -lcurses at build time are still buildable:
+rm -vf /usr/lib/libcursesw.so
+echo "INPUT(-lncursesw)" > /usr/lib/libcursesw.so
+ln -sfv libncurses.so /usr/lib/libcurses.so
+#If desired, install the Ncurses documentation:
+mkdir -v /usr/share/doc/ncurses-6.2
+cp -v -R doc/* /usr/share/doc/ncurses-6.2
+
+#The instructions above don't create non-wide-character Ncurses libraries since no package installed by
+#compiling from sources would link against them at runtime. However, the only known binary-only
+#applications that link against non-wide-character Ncurses libraries require version 5. If you must have such
+#libraries because of some binary-only application or to be compliant with LSB, build the package again with
+#the following commands:
+
+make distclean
+./configure --prefix=/usr		\
+	--with-shared			\
+	--without-normal		 \
+	--without-debug 		\
+	--without-cxx-binding 		\
+	--with-abi-version=5
+make sources libs
+cp -av lib/lib*.so.5* /usr/lib
+
+
+cd ../
+rm -rf ncurses-6.2
+
+
+#/* Sed-4.8 */
+echo "Installing Sed-4.8 ..."
+sleep 2
+tar -xvf sed-4.8.tar.xz
+cd sed-4.8
+./configure --prefix=/usr --bindir=/bin
+#Compile the package and generate the HTML documentation:
+make
+make html
+#To test the results, issue:
+chown -Rv tester .
+su tester -c "PATH=$PATH make check"
+#Install the package and its documentation:
+make install
+install -d -m755 /usr/share/doc/sed-4.8
+install -m644 doc/sed.html /usr/share/doc/sed-4.8
+
+cd ../
+rm -rf sed-4.8
+
+
+#/* Psmisc-23.3 */
+echo "Installing Psmisc-23.3 ..."
+sleep 2
+tar -xvf psmisc-23.3.tar.xz
+cd psmisc-23.3
+#Prepare Psmisc for compilation:
+./configure --prefix=/usr
+#Compile the package:
+make
+#This package does not come with a test suite.
+#Install the package:
+make install
+#Finally, move the killall and fuser programs to the location specified by the FHS:
+mv -v /usr/bin/fuser /bin
+mv -v /usr/bin/killall /bin
+
+cd ../
+rm -rf psmisc-23.3
+
+
+#/* Gettext-0.21 */
+echo "Installing Gettext-0.21 ..."
+sleep 2
+tar -xvf gettext-0.21.tar.xz
+cd gettext-0.21
+
+#Prepare Gettext for compilation:
+./configure --prefix=/usr		\
+	--disable-static		 \
+	--docdir=/usr/share/doc/gettext-0.21
+#Compile the package:
+make
+#To test the results (this takes a long time, around 3 SBUs), issue:
+make check
+#Install the package:
+make install
+chmod -v 0755 /usr/lib/preloadable_libintl.so
+
+cd ../
+rm -rf gettext-0.21
+  
+
+#/* Bison-3.7.1 */
+echo "Installing Bison-3.7.1 ...."
+sleep 2
+tar -xvf bison-3.7.1.tar.xz
+cd bison-3.7.1
+#Prepare Bison for compilation:
+./configure --prefix=/usr --docdir=/usr/share/doc/bison-3.7.1
+#Compile the package:
+make
+#To test the results (about 5.5 SBU), issue:
+make check
+#Install the package:
+make install
+
+cd ../
+rm -rf bison-3.7.1
+
+
+
+
+#/* Grep-3.4 */
+echo "Installing Grep-3.4 ..."
+sleep 2
+tar -xvf grep-3.4.tar.xz
+cd grep-3.4
+#Prepare Grep for compilation:
+./configure --prefix=/usr --bindir=/bin
+#Compile the package:
+make
+#To test the results, issue:
+make check
+#Install the package:
+make install
+
+cd ../
+rm -rf grep-3.4
+
+
+#/*Bash-5.0 */
+echo "Installing Bash-5.0 ..."
+sleep 2
+tar -xvf bash-5.0.tar.gz
+cd bash-5.0
+#ncorporate some upstream fixes:
+patch -Np1 -i ../bash-5.0-upstream_fixes-1.patch
+#repare Bash for compilation:
+./configure --prefix=/usr			\
+	--docdir=/usr/share/doc/bash-5.0 	\
+	--without-bash-malloc			\
+	--with-installed-readline
+#Compile the package:
+make
+#To prepare the tests, ensure that the tester user can write to the sources tree
+echo "To prepare the tests, ensure that the tester user can write to the sources tree:"
+chown -Rv tester
+#Now, run the tests as the tester user:
+echo "Now, run the tests as the tester user:"
+su tester << EOF
+PATH=$PATH make tests < $(tty)
+EOF
+#Install the package and move the main executable to /bin:
+make install
+mv -vf /usr/bin/bash /bin
+#Run the newly compiled bash program (replacing the one that is currently being executed):
+exec /bin/bash --login +h
+
+cd ../
+rm -rf bash-5.0
+
+#/* Libtool-2.4.6 */
+echo "Installing Libtool-2.4.6 ..."
+sleep 2
+tar -xvf libtool-2.4.6.tar.xz
+cd libtool-2.4.6
+#Prepare Libtool for compilation:
+./configure --prefix=/usr
+#Compile the package:
+make
+#To test the results, issue:
+echo " Testing the results"
+make check
+
+#Install the package:
+echo "Installing packages"
+make install
+
+cd ../
+rm -rf libtool-2.4.6
+
+
+#/*  GDBM-1.18.1 */
+echo "Installing GDBM-1.18.1 ...."
+sleep 2
+tar -xvf gdbm-1.18.1.tar.gz
+cd gdbm-1.18.1
+#First, fix an issue first identified by gcc-10:
+sed -r -i '/^char.*parseopt_program_(doc|args)/d' src/parseopt.c
+#Prepare GDBM for compilation:
+./configure --prefix=/usr		\
+	--disable-static		 \
+	--enable-libgdbm-compat
+#Compile the package:
+make
+#To test the results, issue:
+echo "testing results"
+make check
+#Install the package:
+make install
+
+cd ../
+rm -rf gdbm-1.18.1
+
+
+#/* Gperf-3.1 */
+echo "Installing Gperf-3.1 ..."
+sleep 2
+tar -xvf gperf-3.1.tar.gz
+cd gperf-3.1
+
+#Prepare Gperf for compilation:
+./configure --prefix=/usr --docdir=/usr/share/doc/gperf-3.1
+#Compile the package:
+make
+#The tests are known to fail if running multiple simultaneous tests (-j option greater than 1). To test the results, issue:
+echo "Testing results"
+make -j1 check
+#Install the package:
+make install
+
+cd ../
+rm -rf gperf-3.1
+
+#/* Expat-2.2.9 */
+echo "Installing Expat-2.2.9 ..."
+sleep 2
+tar -xvf expat-2.2.9.tar.xz
+cd expat-2.2.9
+
+#Prepare Expat for compilation:
+./configure --prefix=/usr		\
+	--disable-static \
+	--docdir=/usr/share/doc/expat-2.2.9
+#Compile the package:
+make
+#To test the results, issue:
+echo "Testing result "
+make check
+#Install the package:
+make install
+#If desired, install the documentation:
+install -v -m644 doc/*.{html,png,css} /usr/share/doc/expat-2.2.9
+
+cd ../
+rm -rf expat-2.2.9
+
+
+#/* Inetutils-1.9.4 */
+echo "Installing Inetutils-1.9.4 ..."
+sleep 2
+tar -xvf inetutils-1.9.4.tar.xz
+cd inetutils-1.9.4
+#Prepare Inetutils for compilation:
+./configure --prefix=/usr		\
+	--localstatedir=/var		\
+	--disable-logger		\
+	--disable-whois			\
+	--disable-rcp			\
+	--disable-rexec			\
+	--disable-rlogin		\
+	--disable-rsh			\
+	--disable-servers
+
+#Compile the package:
+make
+#To test the results, issue:
+echo "Testing result "
+make check
+
+#Install the package:
+make install
+#Move some programs so they are available if /usr is not accessible:
+mv -v /usr/bin/{hostname,ping,ping6,traceroute} /bin
+mv -v /usr/bin/ifconfig /sbin
+
+cd ../
+rm -rf inetutils-1.9.4
+
+
+#/*Perl-5.32.0 */
+echo "Installing Perl-5.32.0 "
+sleep 2
+tar -xvf perl-5.32.0.tar.xz
+cd perl-5.32.0
+export BUILD_ZLIB=False
+export BUILD_BZIP2=0
+sh Configure -des					\
+	-Dprefix=/usr					\
+	-Dvendorprefix=/usr				\
+	-Dprivlib=/usr/lib/perl5/5.32/core_perl		\
+	-Darchlib=/usr/lib/perl5/5.32/core_perl		\
+	-Dsitelib=/usr/lib/perl5/5.32/site_perl		\
+	-Dsitearch=/usr/lib/perl5/5.32/site_perl	\
+	-Dvendorlib=/usr/lib/perl5/5.32/vendor_perl	\
+	-Dvendorarch=/usr/lib/perl5/5.32/vendor_perl	\
+	-Dman1dir=/usr/share/man/man1			\
+	-Dman3dir=/usr/share/man/man3			\
+	-Dpager="/usr/bin/less -isR"			\
+	-Duseshrplib					\
+	-Dusethreads
+#Compile the package:
+make
+#To test the results (approximately 11 SBU), issue:
+echo "Testing results "
+make test
+#Install the package and clean up:
+make install
+unset BUILD_ZLIB BUILD_BZIP2
+
+cd ../
+rm -rf perl-5.32.0
+
+
+#/* XML::Parser-2.46 */
+echo "Installing XML::Parser-2.46 ..."
+sleep 2
+tar -xvf XML-Parser-2.46.tar.gz
+cd XML-Parser-2.46
+#Prepare XML::Parser for compilation:
+perl Makefile.PL
+#Compile the package:
+make
+#To test the results, issue:
+make test
+#Install the package:
+make install
+
+cd ../
+r -rf XML-Parser-2.46 
+
+#/* Intltool-0.51.0 */
+echo "Installing Intltool-0.51.0 ..."
+sleep 2
+tar -xvf intltool-0.51.0.tar.gz
+cd intltool-0.51.0
+#First fix a warning that is caused by perl-5.22 and later:
+sed -i 's:\\\${:\\\$\\{:' intltool-update.in
+#Prepare Intltool for compilation:
+./configure --prefix=/usr
+#Compile the package:
+make
+#To test the results, issue:
+echo "Testing rsults "
+make check
+#Install the package:
+make install
+install -v -Dm644 doc/I18N-HOWTO /usr/share/doc/intltool-0.51.0/I18N-HOWTO
+
+
+cd ../
+rm -rf intltool-0.51.0
+
+
+
+#/* Autoconf-2.69 */
+echo "Installing Autoconf-2.69 ..."
+sleep 2
+tar -xvf autoconf-2.69.tar.xz
+cd autoconf-2.69
+#First, fix a bug generated by Perl 5.28.
+sed -i '361 s/{/\\{/' bin/autoscan.in
+
+#Prepare Autoconf for compilation:
+./configure --prefix=/usr
+#Compile the package:
+make
+#The test suite is currently broken by bash-5 and libtool-2.4.3. To run the tests anyway, issue:
+echo "testing results"
+make check
+#Install the package:
+make install
+
+cd ../
+rm -rf autoconf-2.69
+
+
+#/* Automake-1.16.2 */
+echo "Installing Automake-1.16.2 ..."
+sleep 2
+tar -xvf automake-1.16.2.tar.xz
+cd automake-1.16.2
+Fix a failing test:
+sed -i "s/''/etags/" t/tags-lisp-space.sh
+#Prepare Automake for compilation:
+./configure --prefix=/usr --docdir=/usr/share/doc/automake-1.16.2
+#Compile the package:
+make
+#Using the -j4 make option speeds up the tests, even on systems with only one processor, due to internal delays in
+#individual tests. To test the results, issue:
+make -j4 check
+#The test t/subobj.sh is known to fail in the LFS environment.
+#Install the package:
+make install
+
+cd ../
+rm -rf automake-1.16.2
+
+
+#/* Kmod-27 */
+echo "Installing Kmod-27 "
+sleep 2
+tar -xvf kmod-27.tar.xz
+cd kmod-27
+#Prepare Kmod for compilation:
+./configure --prefix=/usr		\
+	--bindir=/bin			\
+	--sysconfdir=/etc		\
+	--with-rootlibdir=/lib		\
+	--with-xz			\
+	--with-zlib
+#Compile the package:
+make
+
+#Install the package and create symlinks for compatibility with Module-Init-Tools (the package that previously handled
+#Linux kernel modules):
+make install
+for target in depmod insmod lsmod modinfo modprobe rmmod; do
+ln -sfv ../bin/kmod /sbin/$target
+done
+ln -sfv kmod /bin/lsmod
+
+cd ../
+rm -rf kmod-27
+
+#/* Libelf from Elfutils-0.180 */
+echo " Installing Libelf from Elfutils-0.180 "
+sleep 2
+tar -xvf elfutils-0.180.tar.bz2
+cd elfutils-0.180
+
+#Prepare Libelf for compilation:
+./configure --prefix=/usr --disable-debuginfod --libdir=/lib
+#Compile the package:
+make
+#To test the results, issue:
+make check
+#Install only Libelf:
+make -C libelf install
+install -vm644 config/libelf.pc /usr/lib/pkgconfig
+rm /lib/libelf.a
+
+cd ../
+rm -rf elfutils-0.180
+
+
+#/* Libffi-3.3 */
+echo "Installing Libffi-3.3 ..."
+sleep 2
+tar -xvf libffi-3.3.tar.gz
+cd libffi-3.3
 
