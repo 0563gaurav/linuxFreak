@@ -1172,3 +1172,805 @@ sleep 2
 tar -xvf libffi-3.3.tar.gz
 cd libffi-3.3
 
+#Prepare libffi for compilation:
+./configure --prefix=/usr --disable-static --with-gcc-arch=native
+#Compile the package:
+make 
+#To test the results, issue:
+make check 
+#Install the package:
+make install
+
+cd ../
+rm -rf libffi-3.3
+
+
+#/* OpenSSL-1.1.1g  */
+echo "Installing  OpenSSL-1.1.1g ..."
+sleep 2
+tar -xvf openssl-1.1.1g.tar.gz
+cd openssl-1.1.1g
+#Prepare OpenSSL for compilation:
+./config --prefix=/usr			\
+	--openssldir=/etc/ssl		\
+	--libdir=lib			\
+	shared				\
+	zlib-dynamic
+#Compile the package:
+make
+#To test the results, issue:
+make test
+
+#Install the package:
+sed -i '/INSTALL_LIBS/s/libcrypto.a libssl.a//' Makefile
+make MANSUFFIX=ssl install
+#If desired, install the documentation:
+mv -v /usr/share/doc/openssl /usr/share/doc/openssl-1.1.1g
+cp -vfr doc/* /usr/share/doc/openssl-1.1.1g
+
+
+cd ../
+rm -rf openssl-1.1.1g
+
+
+#/* Python-3.8.5 */
+echo "Installing Python-3.8.5 ..."
+sleep 2
+tar -xvf Python-3.8.5.tar.xz
+cd Python-3.8.5
+#Prepare Python for compilation:
+./configure --prefix=/usr		\
+	--enable-shared			\
+	--with-system-expat		 \
+	--with-system-ffi		\
+	--with-ensurepip=yes
+#Compile the package:
+make
+#Install the package:
+make install
+chmod -v 755 /usr/lib/libpython3.8.so
+chmod -v 755 /usr/lib/libpython3.so
+ln -sfv pip3.8 /usr/bin/pip3
+#If desired, install the preformatted documentation:
+install -v -dm755 /usr/share/doc/python-3.8.5/html
+tar --strip-components=1 	\	
+	--no-same-owner		\
+	--no-same-permissions 	\
+	-C /usr/share/doc/python-3.8.5/html 	\
+	-xvf ../python-3.8.5-docs-html.tar.bz2
+cd ../
+rm -rf Python-3.8.5
+
+
+#/* Ninja-1.10.0 */
+echo "Installing Ninja-1.10.0 ..."
+sleep 2
+tar -xvf ninja-1.10.0.tar.gz
+cd ninja-1.10.0.
+export NINJAJOBS=4
+#If desired, add the capability to use the environment variable NINJAJOBS by running:
+sed -i '/int Guess/a \
+	int
+	j = 0;\
+	char* jobs = getenv( "NINJAJOBS" );\
+	if ( jobs != NULL ) j = atoi( jobs );\
+	if ( j > 0 ) return j;\
+' src/ninja.cc
+
+#Build Ninja with:
+python3 configure.py --bootstrap
+#To test the results, issue:
+./ninja ninja_test
+./ninja_test --gtest_filter=-SubprocessTest.SetWithLots
+#Install the package:
+install -vm755 ninja /usr/bin/
+install -vDm644 misc/bash-completion /usr/share/bash-completion/completions/ninja
+install -vDm644 misc/zsh-completion /usr/share/zsh/site-functions/_ninja
+
+cd ../
+rm -rf ninja-1.10.0
+
+
+#/*Meson-0.55.0 */
+echo "Installing Meson-0.55.0 ..."
+sleep 2
+tar -xvf meson-0.55.0.tar.gz
+cd meson-0.55.0
+#Compile Meson with the following command:
+python3 setup.py build
+#This package does not come with a test suite.
+#Install the package:
+python3 setup.py install --root=dest
+cp -rv dest/* /
+
+
+cd ../
+rm -rf meson-0.55.0
+
+
+#/* Coreutils-8.32 */
+echo "Installing Coreutils-8.32 ..."
+sleep 2
+tar -xvf coreutils-8.32.tar.xz
+cd coreutils-8.32
+patch -Np1 -i ../coreutils-8.32-i18n-1.patch
+#Suppress a test which on some machines can loop forever:
+sed -i '/test.lock/s/^/#/' gnulib-tests/gnulib.mk
+#Now prepare Coreutils for compilation:
+autoreconf -fiv
+FORCE_UNSAFE_CONFIGURE=1 ./configure	 \
+	--prefix=/usr					\
+	--enable-no-install-program=kill,uptime
+#Compile the package:
+make
+#Now the test suite is ready to be run. First, run the tests that are meant to be run as user root:
+make NON_ROOT_USERNAME=tester check-root
+
+echo "We're going to run the remainder of the tests as the tester user. Certain tests require that the user be a member of
+more than one group. So that these tests are not skipped, add a temporary group and make the user tester a part of it:"
+echo "dummy:x:102:tester" >> /etc/group
+echo "Fix some of the permissions so that the non-root user can compile and run the tests:"
+chown -Rv tester .
+echo "Now run the tests:"
+su tester -c "PATH=$PATH make RUN_EXPENSIVE_TESTS=yes check"
+echo "Removing  the temporary group:"
+sed -i '/dummy/d' /etc/group
+#Install the package:
+make install
+#Move programs to the locations specified by the FHS:
+mv -v /usr/bin/{cat,chgrp,chmod,chown,cp,date,dd,df,echo} /bin
+mv -v /usr/bin/{false,ln,ls,mkdir,mknod,mv,pwd,rm} /bin
+mv -v /usr/bin/{rmdir,stty,sync,true,uname} /bin
+mv -v /usr/bin/chroot /usr/sbin
+mv -v /usr/share/man/man1/chroot.1 /usr/share/man/man8/chroot.8
+sed -i 's/"1"/"8"/' /usr/share/man/man8/chroot.8
+mv -v /usr/bin/{head,nice,sleep,touch} /bin
+
+cd ../
+rm -rf coreutils-8.32
+
+
+#/* Check-0.15.2 */
+echo "Installing Check-0.15.2 ..."
+sleep 2
+tar -xvf check-0.15.2.tar.gz
+cd check-0.15.2
+#Prepare Check for compilation:
+./configure --prefix=/usr --disable-static
+#Build the package:
+make
+#Compilation is now complete. To run the Check test suite, issue the following command:
+make check
+#Note that the Check test suite may take a relatively long (up to 4 SBU) time.
+#Install the package:
+make docdir=/usr/share/doc/check-0.15.2 install
+
+
+cd ../
+rm -rf check-0.15.2
+
+
+#/* Diffutils-3.7 */
+echo "Installing Diffutils-3.7 ..."
+sleep 2
+tar -xvf diffutils-3.7.tar.xz
+cd diffutils-3.7
+#Prepare Diffutils for compilation:
+./configure --prefix=/usr
+#Compile the package:
+make
+#To test the results, issue:
+make check
+#Install the package:
+make install
+
+cd ../
+rm -rf diffutils-3.7
+
+
+#/* Gawk-5.1.0 */
+echo "Installing Gawk-5.1.0 ..."
+sleep 2
+tar -xvf gawk-5.1.0.tar.xz
+cd gawk-5.1.0
+#First, ensure some unneeded files are not installed:
+sed -i 's/extras//' Makefile.in
+#Prepare Gawk for compilation:
+./configure --prefix=/usr
+#Compile the package:
+make
+#To test the results, issue:
+make check
+#Install the package:
+make install
+#If desired, install the documentation:
+mkdir -v /usr/share/doc/gawk-5.1.0
+cp -v doc/{awkforai.txt,*.{eps,pdf,jpg}} /usr/share/doc/gawk-5.1.0
+
+
+cd ../
+rm -rf gawk-5.1.0
+
+
+#/* Findutils-4.7.0 */
+echo "Installing Findutils-4.7.0 ..."
+sleep 2
+tar -xvf findutils-4.7.0.tar.xz
+cd findutils-4.7.0
+#Prepare Findutils for compilation:
+./configure --prefix=/usr --localstatedir=/var/lib/locate
+#Compile the package:
+make
+#To test the results, issue:
+chown -Rv tester .
+su tester -c "PATH=$PATH make check"
+#Install the package:
+make install
+#Some packages in BLFS and beyond expect the find program in /bin, so make sure it's placed there:
+mv -v /usr/bin/find /bin
+sed -i 's|find:=${BINDIR}|find:=/bin|' /usr/bin/updatedb
+
+cd ../
+rm -rf findutils-4.7.0
+
+#/* Groff-1.22.4 */
+echo "Installing Groff-1.22.4 .."
+sleep 2
+tar -xvf groff-1.22.4.tar.gz
+cd groff-1.22.4
+#Prepare Groff for compilation:
+PAGE=A4 ./configure --prefix=/usr
+#This package does not support parallel build. Compile the package:
+make -j1
+#This package does not come with a test suite.
+#Install the package:
+make install
+
+cd ../
+rm -rf groff-1.22.4
+
+
+#/*GRUB-2.04 */
+echo "Installing GRUB-2.04 ..."
+sleep 2
+tar -xvf grub-2.04.tar.xz
+cd grub-2.04
+#Prepare GRUB for compilation:
+./configure --prefix=/usr		\
+	--sbindir=/sbin			\
+	--sysconfdir=/etc		\
+	--disable-efiemu		\
+	--disable-werror
+#Compile the package:
+make
+#This package does not come with a test suite.
+#Install the package:
+make install
+mv -v /etc/bash_completion.d/grub /usr/share/bash-completion/completions
+
+cd ../
+rm -rf grub-2.04
+
+
+#/*Less-551 */
+echo "Installing Less-551 ..."
+sleep 2
+tar -xvf less-551.tar.gz
+cd less-551
+#Prepare Less for compilation:
+./configure --prefix=/usr --sysconfdir=/etc
+#Compile the package:
+make
+#This package does not come with a test suite.
+#Install the package:
+make install
+
+cd ../
+rm -rf less-551
+
+
+#/* Gzip-1.10 */
+echo "Installing Gzip-1.10 ..."
+sleep 2
+tar -xvf gzip-1.10.tar.xz
+cd gzip-1.10
+#Prepare Gzip for compilation:
+./configure --prefix=/usr
+#Compile the package:
+make
+#To test the results, issue:
+make check
+#Install the package:
+make install
+#Move a program that needs to be on the root filesystem:
+mv -v /usr/bin/gzip /bin
+
+cd ../
+rm -rf gzip-1.10
+
+
+#/* IPRoute2-5.8.0 */
+echo "Installing IPRoute2-5.8.0 ..."
+sleep 2
+tar -xvf iproute2-5.8.0.tar.xz
+cd iproute2-5.8.0
+sed -i /ARPD/d Makefile
+rm -fv man/man8/arpd.8
+#It is also necessary to disable building two modules that require http://www.linuxfromscratch.org/blfs/view/10.0/postlfs/
+#iptables.html.
+sed -i 's/.m_ipt.o//' tc/Makefile
+#Compile the package:
+make
+#This package does not have a working test suite.
+#Install the package:
+make DOCDIR=/usr/share/doc/iproute2-5.8.0 install
+
+cd ../
+rm -rf iproute2-5.8.0
+
+#/* Kbd-2.3.0 */
+echo "Installing Kbd-2.3.0 ..."
+sleep 2
+tar -xvf kbd-2.3.0.tar.xz
+cd kbd-2.3.0
+patch -Np1 -i ../kbd-2.3.0-backspace-1.patch
+#Prepare Kbd for compilation:
+./configure --prefix=/usr --disable-vlock
+#Compile the package:
+make
+#To test the results, issue:
+make check
+#Install the package:
+make install
+#Remove an internal library installed unintentionally:
+rm -v /usr/lib/libtswrap.{a,la,so*}
+#If desired, install the documentation:
+mkdir -v /usr/share/doc/kbd-2.3.0
+cp -R -v docs/doc/* /usr/share/doc/kbd-2.3.0
+
+cd ../
+rm -rf kbd-2.3.0
+
+
+#/* Libpipeline-1.5.3 */
+echo "Installing Libpipeline-1.5.3 ..."
+sleep 2
+tar -xvf libpipeline-1.5.3.tar.gz
+cd libpipeline-1.5.3
+#Prepare Libpipeline for compilation:
+./configure --prefix=/usr
+#Compile the package:
+make
+#To test the results, issue:
+make check
+#Install the package:
+make install
+
+cd ../
+rm -rf libpipeline-1.5.3
+
+
+#/* Make-4.3 */
+echo "Installing Make-4.3 ..."
+sleep 2
+tar -xvf make-4.3.tar.gz
+cd make-4.3
+#Prepare Make for compilation:
+./configure --prefix=/usr
+#Compile the package:
+make
+#To test the results, issue:
+make check
+#Install the package:
+make install
+
+cd ../
+rm -rf make-4.3
+
+
+#/* Patch-2.7.6 */
+echo "Installing Patch-2.7.6 "
+sleep 2
+tar -xvf patch-2.7.6.tar.xz
+cd patch-2.7.6
+#Prepare Patch for compilation:
+./configure --prefix=/usr
+#Compile the package:
+make
+#To test the results, issue:
+make check
+#Install the package:
+make install
+
+cd ../
+rm -rf patch-2.7.6
+
+#/*Man-DB-2.9.3 */
+echo "Installing Man-DB-2.9.3 ..."
+sleep 2
+tar -xvf man-db-2.9.3.tar.xz
+cd man-db-2.9.3
+#Prepare Man-DB for compilation:
+sed -i '/find/s@/usr@@' init/systemd/man-db.service.in
+./configure --prefix=/usr			\
+	--docdir=/usr/share/doc/man-db-2.9.3	\
+	--sysconfdir=/etc			\
+	--disable-setuid			\
+	--enable-cache-owner=bin		\
+	--with-browser=/usr/bin/lynx		\
+	--with-vgrind=/usr/bin/vgrind		\
+	--with-grap=/usr/bin/grap
+#Compile the package:
+make
+#To test the results, issue:
+make check
+#Install the package:
+make install
+
+cd ../
+rm -rf man-db-2.9.3
+
+
+#/* Tar-1.32 */
+echo "Installing Tar-1.32 ..."
+sleep 2
+tar -xvf tar-1.32.tar.xz
+cd tar-1.32
+#Prepare Tar for compilation:
+FORCE_UNSAFE_CONFIGURE=1 \
+./configure --prefix=/usr \
+	--bindir=/bin
+#Compile the package:
+make
+#To test the results (about 3 SBU), issue:
+make check
+#One test, capabilities: binary store/restore, is known to fail.
+#Install the package:
+make install
+make -C doc install-html docdir=/usr/share/doc/tar-1.32
+
+cd ../
+rm -rf tar-1.32
+
+
+#/* Texinfo-6.7 */
+echo "Installing Texinfo-6.7 ..."
+sleep 2
+tar -xvf texinfo-6.7.tar.xz
+cd texinfo-6.7
+
+#Prepare Texinfo for compilation:
+./configure --prefix=/usr --disable-static
+#Compile the package:
+make
+#To test the results, issue:
+make check
+#Install the package:
+make install
+#Optionally, install the components belonging in a TeX installation:
+make TEXMF=/usr/share/texmf install-tex
+
+pushd /usr/share/info
+	rm -v dir
+	for f in *
+		do install-info $f dir 2>/dev/null
+done
+popd
+
+cd ../
+rm -rf texinfo-6.7
+
+
+#/* Vim-8.2.1361 */
+echo "Installing Vim-8.2.1361 ...."
+sleep 2
+tar -xvf vim-8.2.1361.tar.gz
+cd vim-8.2.1361
+#First, change the default location of the vimrc configuration file to /etc:
+echo '#define SYS_VIMRC_FILE "/etc/vimrc"' >> src/feature.h
+#Prepare vim for compilation:
+./configure --prefix=/usr
+#Compile the package:
+make
+#To prepare the tests, ensure that user tester can write to the source tree:
+chown -Rv tester .
+#Now run the tests as user tester:
+su tester -c "LANG=en_US.UTF-8 make -j1 test" &> vim-test.log
+#Install the package:
+make install
+#Many users are used to using vi instead of vim. To allow execution of vim when users habitually enter vi, create a
+#symlink for both the binary and the man page in the provided languages:
+ln -sv vim /usr/bin/vi
+for L in /usr/share/man/{,*/}man1/vim.1; do
+ln -sv vim.1 $(dirname $L)/vi.1
+done
+#By default, vim's documentation is installed in /usr/share/vim. The following symlink allows the documentation
+#to be accessed via /usr/share/doc/vim-8.2.1361, making it consistent with the location of documentation
+#for other packages:
+ln -sv ../vim/vim82/doc /usr/share/doc/vim-8.2.1361
+
+
+#Configuring Vim
+cat > /etc/vimrc << "EOF"
+" Begin /etc/vimrc
+" Ensure defaults are set before customizing settings, not after
+source $VIMRUNTIME/defaults.vim
+let skip_defaults_vim=1
+set nocompatible
+set backspace=2
+set mouse=
+syntax on
+if (&term == "xterm") || (&term == "putty")
+set background=dark
+endif
+" End /etc/vimrc
+EOF
+#Documentation for other available options can be obtained by running the following command:
+vim -c ':options'
+
+
+cd ../
+rm -rf vim-8.2.1361
+
+
+#/* Systemd-246 */
+echo "Installing Systemd-246 ..."
+sleep 2
+tar -xvf systemd-246.tar.gz
+cd systemd-246
+#Create a symlink to work around the xsltproc command not being installed:
+ln -sf /bin/true /usr/bin/xsltproc
+#Set up the man pages:
+tar -xf ../systemd-man-pages-246.tar.xz
+#Remove tests that cannot be built in chroot:
+sed '177,$ d' -i src/resolve/meson.build
+#Remove an unneeded group, render, from the default udev rules:
+sed -i 's/GROUP="render", //' rules.d/50-udev-default.rules.in
+
+#Prepare systemd for compilation:
+mkdir -pv build
+cd build
+LANG=en_US.UTF-8		\
+meson --prefix=/usr		\
+	--sysconfdir=/etc		\
+	--localstatedir=/var		\
+	-Dblkid=true			\
+	-Dbuildtype=release		\
+	-Ddefault-dnssec=no		\
+	-Dfirstboot=false		\
+	-Dinstall-tests=false		\
+	-Dkmod-path=/bin/kmod		\
+	-Dldconfig=false		\
+	-Dmount-path=/bin/mount		\
+	-Drootprefix=			\
+	-Drootlibdir=/lib		\
+	-Dsplit-usr=true		\
+	-Dsulogin-path=/sbin/sulogin \
+	-Dsysusers=false		\
+	-Dumount-path=/bin/umount	\
+	-Db_lto=false			\
+	-Drpmmacrosdir=no		\
+	-Dhomed=false			\
+	-Duserdb=false			\
+	-Dman=true			\
+	-Ddocdir=/usr/share/doc/systemd-246 \
+	..
+#Compile the package:
+LANG=en_US.UTF-8 ninja
+#Install the package:
+LANG=en_US.UTF-8 ninja install
+#Remove an unnecessary symbolic link:
+rm -f /usr/bin/xsltproc
+#Create the /etc/machine-id file needed by systemd-journald:
+systemd-machine-id-setup
+#Setup the basic target structure:
+systemctl preset-all
+#Disable a service that is known to cause problems with systems that use a network configuration other than what is
+#provided by systemd-networkd:
+systemctl disable systemd-time-wait-sync.service
+#Prevent systemd from resetting the maximum PID value which causes some problems with packages and units in BLFS:
+rm -f /usr/lib/sysctl.d/50-pid-max.conf
+
+
+cd ../
+rm -rf systemd-246
+
+
+#/* D-Bus-1.12.20 */
+echo "Installing D-Bus-1.12.20 ..."
+sleep 2
+tar -xvf dbus-1.12.20.tar.gz
+cd dbus-1.12.20
+#Prepare D-Bus for compilation:
+./configure --prefix=/usr			\
+	--sysconfdir=/etc			\
+	--localstatedir=/var			\
+	--disable-static			\
+	--disable-doxygen-docs			\
+	--disable-xml-docs			\
+	--docdir=/usr/share/doc/dbus-1.12.20	 \
+	--with-console-auth-dir=/run/console
+#Compile the package:
+make
+#Install the package:
+make install
+#The shared library needs to be moved to /lib, and as a result the .so file in /usr/lib will need to be recreated:
+mv -v /usr/lib/libdbus-1.so.* /lib
+ln -sfv ../../lib/$(readlink /usr/lib/libdbus-1.so) /usr/lib/libdbus-1.so
+#Create a symlink so that D-Bus and systemd can use the same machine-id file:
+ln -sfv /etc/machine-id /var/lib/dbus
+#Move the socket file to /run instead of the deprecated /var/run:
+sed -i 's:/var/run:/run:' /lib/systemd/system/dbus.socket
+
+cd ../
+rm -rf dbus-1.12.20
+
+
+#/* Procps-ng-3.3.16 */
+echo "Installing Procps-ng-3.3.16 ..."
+sleep 2
+tarv -xvf procps-ng-3.3.16.tar.xz
+cd procps-ng-3.3.16
+Prepare procps-ng for compilation:
+./configure --prefix=/usr		\
+	--exec-prefix=			\
+	--libdir=/usr/lib		\
+	--docdir=/usr/share/doc/procps-ng-3.3.16	\
+	--disable-static		\
+	--disable-kill			\
+	--with-systemd
+#Compile the package:
+make
+#To run the test suite, run:
+make check
+#Install the package:
+make install
+#Finally, move essential libraries to a location that can be found if /usr is not mounted.
+mv -v /usr/lib/libprocps.so.* /lib
+ln -sfv ../../lib/$(readlink /usr/lib/libprocps.so) /usr/lib/libprocps.so
+
+cd ../
+rm -rf procps-ng-3.3.16
+
+#/*Util-linux-2.36 */
+echo "Installing Util-linux-2.36 .."
+sleep 2
+tar -xvf util-linux-2.36.tar.xz
+cd util-linux-2.36
+#The FHS recommends using the /var/lib/hwclock directory instead of the usual /etc directory as the location
+#for the adjtime file. Create this directory with:
+mkdir -pv /var/lib/hwclock
+#Prepare Util-linux for compilation:
+./configure ADJTIME_PATH=/var/lib/hwclock/adjtime	\
+	--docdir=/usr/share/doc/util-linux-2.36 	\
+	--disable-chfn-chsh 				\
+	--disable-login					\
+	--disable-nologin				\
+	--disable-su					\
+	--disable-setpriv				\
+	--disable-runuser				\
+	--disable-pylibmount 				\
+	--disable-static				\
+	--without-python
+#Compile the package:
+make
+#Install the package:
+make install
+
+
+cd ../
+rm -rf util-linux-2.36
+
+#/* E2fsprogs-1.45.6 */
+echo "Installing E2fsprogs-1.45.6 ..."
+sleep 2
+tar -xvf e2fsprogs-1.45.6.tar.gz
+cd e2fsprogs-1.45.6
+#The e2fsprogs documentation recommends that the package be built in a subdirectory of the source tree:
+mkdir -v build
+cd build
+#Prepare e2fsprogs for compilation:
+../configure --prefix=/usr		\
+	--bindir=/bin			\
+	--with-root-prefix=""		\
+	--enable-elf-shlibs		\
+	--disable-libblkid		\
+	--disable-libuuid		\
+	--disable-uuidd			\
+	--disable-fsck
+#Compile the package:
+make
+#To run the tests, issue:
+make check
+#On a spinning disk, the tests take a little more than 4 SBUs. They can be much shorter on an SSD (down to about
+#1.5 SBUs).
+#Install the package:
+make install
+Make the installed static libraries writable so debugging symbols can be removed later:
+chmod -v u+w /usr/lib/{libcom_err,libe2p,libext2fs,libss}.a
+#This package installs a gzipped .info file but doesn't update the system-wide dir file. Unzip this file and then update
+@the system dir file using the following commands:
+gunzip -v /usr/share/info/libext2fs.info.gz
+install-info --dir-file=/usr/share/info/dir /usr/share/info/libext2fs.info
+#If desired, create and install some additional documentation by issuing the following commands:
+makeinfo -o doc/com_err.info ../lib/et/com_err.texinfo
+install -v -m644 doc/com_err.info /usr/share/info
+install-info --dir-file=/usr/share/info/dir /usr/share/info/com_err.info
+
+cd ../../
+rm -rf e2fsprogs-1.45.6
+
+#/* Stripping Again  */
+echo "Stripping Again ..."
+sleep 5
+#First place the debugging symbols for selected libraries in separate files. This debugging information is needed if
+#running regression tests that use valgrind or gdb later in BLFS.
+save_lib="ld-2.32.so libc-2.32.so libpthread-2.32.so libthread_db-1.0.so"
+cd /lib
+for LIB in $save_lib; do
+	objcopy --only-keep-debug $LIB $LIB.dbg
+	strip --strip-unneeded $LIB
+	objcopy --add-gnu-debuglink=$LIB.dbg $LIB
+done
+save_usrlib="libquadmath.so.0.0.0 libstdc++.so.6.0.28
+	libitm.so.1.0.0 libatomic.so.1.2.0"
+cd /usr/lib
+for LIB in $save_usrlib; do
+	objcopy --only-keep-debug $LIB $LIB.dbg
+	strip --strip-unneeded $LIB
+	objcopy --add-gnu-debuglink=$LIB.dbg $LIB
+done
+unset LIB save_lib save_usrlib
+#Now the binaries and libraries can be stripped:
+find /usr/lib -type f -name \*.a \
+	-exec strip --strip-debug {} ';'
+find /lib /usr/lib -type f -name \*.so* ! -name \*dbg \
+	-exec strip --strip-unneeded {} ';'
+find /{bin,sbin} /usr/{bin,sbin,libexec} -type f \
+	-exec strip --strip-all {} ';'
+
+
+
+#/* Cleaning Up */
+echo "Cleaning Up ..."
+sleep 5
+#Finally, clean up some extra files left around from running tests:
+rm -rf /tmp/*
+
+#Now log out and reenter the chroot environment with an updated chroot command. From now on, use this updated
+#chroot command any time you need to reenter the chroot environment after exiting:
+logout
+chroot "$LFS" /usr/bin/env -i		\
+	HOME=/root TERM="$TERM"		\
+	PS1='(lfs chroot) \u:\w\$ '	\
+	PATH=/bin:/usr/bin:/sbin:/usr/sbi	\n
+	/bin/bash --login
+
+#There were several static libraries that were not suppressed earlier in the chapter in order to satisfy the regression tests in
+#several packages. These libraries are from binutils, bzip2, e2fsprogs, flex, libtool, and zlib. If desired, remove them now:
+
+rm -f /usr/lib/lib{bfd,opcodes}.a
+rm -rf /usr/lib/libctf{,-nobfd}.a
+rm -rf /usr/lib/libbz2.a
+rm -rf /usr/lib/lib{com_err,e2p,ext2fs,ss}.a
+rm -rf /usr/lib/libltdl.a
+rm -rf /usr/lib/libfl.a
+rm -rf /usr/lib/libz.a
+
+find /usr/lib /usr/libexec -name \*.la -delete
+#For more information about libtool archive files, see the BLFS section "About Libtool Archive (.la) files".
+#The compiler built in Chapter 6 and Chapter 7 is still partially installed and not needed anymore. Remove it with:
+find /usr -depth -name $(uname -m)-lfs-linux-gnu\* | xargs rm -rf
+#The /tools directory can also be removed to further gain some place:
+rm -rf /tools
+#Finally, remove the temporary 'tester' user account created at the beginning of the previous chapter.
+userdel -r tester
+
+
+#<------------------------------------------------------DONE --------------------------------------------------------->
+
+#/* Author */
+#Gaurav Gautam Shakya
+#Electrical Engineer 
+#Linux Adminstrator
+#E-MAIL<hkrgs1234@gmail.com>
