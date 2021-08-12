@@ -19,7 +19,6 @@ sleep 3
 
 #/*Binutils*/
 echo "Binutils is being build " 1> $LOG/current_pkg
-
 tar -xvf binutils-2.35.tar.xz 2> $LOG/err
 cd binutils-2.35
 mkdir -pv build

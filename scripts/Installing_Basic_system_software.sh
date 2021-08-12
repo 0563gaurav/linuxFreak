@@ -1966,7 +1966,7 @@ rm -rf /tools
 #Finally, remove the temporary 'tester' user account created at the beginning of the previous chapter.
 userdel -r tester
 
-
+echo "DONE !!!"
 #<------------------------------------------------------DONE --------------------------------------------------------->
 
 #/* Author */
