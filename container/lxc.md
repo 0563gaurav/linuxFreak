@@ -60,7 +60,7 @@ NOTE:	Your system will then have all the LXC commands available, all its templat
 	* lxc image list images:cent | less  # It will list all the images started with cent keyword at remote repositores 
 	* lxc image list images:debian | less # similarly for the debian images 
 
-* creating , deleting the containers
+* creating ,startingg, stopping and  deleting the containers
 	
 	* lxc launch ubuntu:16.04  <container-name >  # If you are runnig this command for the first time than it will pull the image from remote repository , after it 	will get stared. 
 	* lxc image list # it will show the local images.
@@ -96,7 +96,7 @@ NOTE:	Your system will then have all the LXC commands available, all its templat
 	* lxc profile list # It will list the all the profiles.
 	* lxc profile show default 	# It will show the detail about default profile.
 	or
-	 lxc profile shoe <profile-name>
+	 lxc profile show  <profile-name>
 	* lxc prfile copy default custom # It will create the new profile .
 	* lxc profile edit <profile-name> # It will open profile into nano editor , and you can change the setting by editing this file. 
 	
