@@ -1,6 +1,5 @@
 
 all:
-	cd /mnt/lfs/sources
 	#bash ./scripts/Host_preperation.sh
 	bash ./scripts/Version_check.sh
 	bash ./scripts/Build_temporary_cross_toolchain.sh
