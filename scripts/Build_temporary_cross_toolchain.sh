@@ -18,14 +18,14 @@ echo "Welcome to this advancture"
 sleep 3
 
 #/*Binutils*/
-echo "Binutils is being build " 1> $LOG/current_pkg
-tar -xvf binutils-2.35.tar.xz 2> $LOG/err
+echo "Binutils is being build " 1> 
+tar -xvf binutils-2.35.tar.xz 
 cd binutils-2.35
 mkdir -pv build
 cd build
-../configure --prefix=$LFS/tools --with-sysroot=$LFS --target=$LFS_TGT --disable-nls --disable-werror  2> $LOG/err
-make  2> $LOG/err
-make install  2> $LOG/err
+../configure --prefix=$LFS/tools --with-sysroot=$LFS --target=$LFS_TGT --disable-nls --disable-werror  
+make  
+make install  
 cd ../../
 rm -rf binutils-2.53
 
