@@ -18,7 +18,7 @@ echo "Welcome to this advancture"
 sleep 3
 
 #/*Binutils*/
-echo "Binutils is being build " 1> 
+echo "Binutils is being build "  
 tar -xvf binutils-2.35.tar.xz 
 cd binutils-2.35
 mkdir -pv build
