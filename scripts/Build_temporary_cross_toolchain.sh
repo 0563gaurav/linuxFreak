@@ -23,11 +23,7 @@ tar -xvf binutils-2.35.tar.xz 2> $LOG/err
 cd binutils-2.35
 mkdir -pv build
 cd build
-../configure --prefix=$LFS/tools \
-	--with-sysroot=$LFS 	 \
-	--target=$LFS_TGT	 \
-	--disable-nls		\
-	--disable-werror  2> $LOG/err
+../configure --prefix=$LFS/tools --with-sysroot=$LFS --target=$LFS_TGT --disable-nls --disable-werror  2> $LOG/err
 make  2> $LOG/err
 make install  2> $LOG/err
 cd ../../
