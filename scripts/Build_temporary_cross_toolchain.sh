@@ -6,11 +6,13 @@
 #lfs user must have full control on $LFS/sources dir 
 
 export LFS=/mnt/lfs
-export LOG=$LFS/sources/log
+export LOG_PATH=$LFS/sources/log
 cd $LFS/sources
 
 mkdir -pv $LOG
-touch $LOG/err  $LOG/current_pkg
+touch $LOG_PATH/err  $LOG_PATH/current_pkg
+ERROR=$LOG_PATH/err
+CURR_PKG=$LOG_PATH/current_pkg
 
 #/*start compiling toolchain */
 
@@ -18,16 +20,16 @@ echo "Welcome to this advancture"
 sleep 3
 
 #/*Binutils*/
-echo "Binutils is being build "  
-tar -xvf binutils-2.35.tar.xz 
+echo "Binutils is being build " 1>ERROR 
+tar -xvf binutils-2.35.tar.xz 2>ERROR
 cd binutils-2.35
 mkdir -pv build
 cd build
-../configure --prefix=$LFS/tools --with-sysroot=$LFS --target=$LFS_TGT --disable-nls --disable-werror  
-make  
-make install  
+../configure --prefix=$LFS/tools --with-sysroot=$LFS --target=$LFS_TGT --disable-nls --disable-werror 2>ERROR 
+make  2>ERROR
+make install  2>ERROR
 cd ../../
-rm -rf binutils-2.53
+rm -rf binutils-2.53 2>ERROR
 
 
 #/*GCC */
@@ -35,20 +37,20 @@ echo
 echo 
 echo 
 echo
-echo "Starting with gcc package ...."
+echo "Starting with gcc package ...." 1>CURR_PKG
 sleep 3
 
 
-tar -xvf gcc-10.2.0.tar.xz 
-cd gcc-10.2.0 
+tar -xvf gcc-10.2.0.tar.xz 2>ERROR
+cd gcc-10.2.0 2>ERROR
 #? dependency resolve 
 #gcc package dependes on mpc , mpfr and gmp packages 
-tar -xvf ../mpc-1.1.0.tar.gz
-mv mpc-1.1.0 mpc
-tar -xvf ../gmp-6.2.0.tar.xz
-mv gmp-6.2.0 gmp
-tar -xvf ../mpfr-4.1.0.tar.xz
-mv mpfr-4.1.0 mpfr
+tar -xvf ../mpc-1.1.0.tar.gz 2>ERROR
+mv mpc-1.1.0 mpc 2>ERROR
+tar -xvf ../gmp-6.2.0.tar.xz 2>ERROR
+mv gmp-6.2.0 gmp 2>ERROR
+tar -xvf ../mpfr-4.1.0.tar.xz 2>ERROR
+mv mpfr-4.1.0 mpfr 2> ERROR
 #on x84_64 hosts, set the defoult dirctory  name for 64-bit libraries to "lib"
 case $(uname -m) in
 	x86_64) 
@@ -77,19 +79,19 @@ cd build
 	--disable-libssp	  \
 	--disable-libvtv	  \
 	--disable-libstdcxx	  \
-	--enable-lanuages=c,c++  
-make -j8 
-make install 
+	--enable-lanuages=c,c++  2>ERROR
+make -j8 2>ERROR
+make install 2>ERROR
 #Note 
 cd ../
 cat gcc/limitx.h gcc/glimits.h gcc/limity.h > \
-	`dirname $($LFS_TGT-gcc -print-libgcc-file-name) ` /install-tools/include/limits.h 
+	`dirname $($LFS_TGT-gcc -print-libgcc-file-name) ` /install-tools/include/limits.h 2>ERROR
 
 cd ../
 rm -rf gcc-10.2.0
 
 
-
+exit
 
 #/* linux API  headers */
 echo "stating with installing linux API" 
