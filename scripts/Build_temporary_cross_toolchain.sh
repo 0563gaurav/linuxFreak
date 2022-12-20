@@ -9,7 +9,7 @@ export LFS=/mnt/lfs
 export LOG_PATH=$LFS/sources/log
 cd $LFS/sources
 
-mkdir -pv $LOG
+mkdir -pv $LOG_PATH
 touch $LOG_PATH/err  $LOG_PATH/current_pkg
 ERROR=$LOG_PATH/err
 CURR_PKG=$LOG_PATH/current_pkg
