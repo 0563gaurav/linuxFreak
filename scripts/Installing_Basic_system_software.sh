@@ -9,109 +9,111 @@
 echo "Installing Basic System Software ...."
 sleep 3
 export LFS=/mnt/lfs
-export LOG=$LFS/sources/log
-
+export LOG_PATH=$LFS/sources/log
+touch $LOG_PATH/err $LOG_PATH/current_pkg
+ERROR=$LOG_PATH/err
+CURR_PKG=$LOG_PATH/current_pkg
 #/*Man-pages-5.08 */
-echo "Installing man-pages ..."
+echo "Installing man-pages ..." 1>$CURR_PKG
 sleep 3
-tar -xvf man-pages-5.08.tar.xz
-cd man-pages-5.08
-make install
+tar -xvf man-pages-5.08.tar.xz 1>$ERROR
+cd man-pages-5.08 2>$ERROR
+make install 2>$ERROR
 
 cd ../
 rm -rf man-pages-5.08
 
 #/* Tcl-8.6.10 */
-echo "Installing Tcl-8.6.10 ..."
+echo "Installing Tcl-8.6.10 ..." 1>$CURR_PKG
 sleep 3
 mkdir -pc build
 cd build
-tar -xf ../tcl8.6.10-html.tar.gz --strip-components=1
+tar -xf ../tcl8.6.10-html.tar.gz --strip-components=1 2>$ERROR
 SRCDIR=$(pwd)
 cd unix
 ./configure --prefix=/usr			\
 		--mandir=/usr/share/man 	\
-		$([ "$(uname -m)" = x86_64 ] && echo --enable-64bit)
-make  -j$(nproc)
+		$([ "$(uname -m)" = x86_64 ] && echo --enable-64bit)  2>$ERROR
+make  -j$(nproc) 2>$ERROR
 
 sed -e "s|$SRCDIR/unix|/usr/lib|" 	\
 	-e "s|$SRCDIR|/usr/include|" \
-	-i tclConfig.sh
+	-i tclConfig.sh 2>$ERROR
 
 sed -e "s|$SRCDIR/unix/pkgs/tdbc1.1.1|/usr/lib/tdbc1.1.1|" \
 	-e "s|$SRCDIR/pkgs/tdbc1.1.1/generic|/usr/include|"	\
 	-e "s|$SRCDIR/pkgs/tdbc1.1.1/library|/usr/lib/tcl8.6|"	\
 	-e "s|$SRCDIR/pkgs/tdbc1.1.1|/usr/include|"	\
-	-i pkgs/tdbc1.1.1/tdbcConfig.sh
+	-i pkgs/tdbc1.1.1/tdbcConfig.sh  2>$ERROR
 
 
 sed -e	-e "s|$SRCDIR/unix/pkgs/itcl4.2.0|/usr/lib/itcl4.2.0|" 		\
 	-e "s|$SRCDIR/pkgs/itcl4.2.0/generic|/usr/include|"		\
 	-e "s|$SRCDIR/pkgs/itcl4.2.0|/usr/include|"			\
-	-i pkgs/itcl4.2.0/itclConfig.sh
+	-i pkgs/itcl4.2.0/itclConfig.sh 2>$ERROR
 
 unset SRCDIR
 
 #To test the results, issue:
-make test
+make test 2>$ERROR
 #Install the package:
-make install
+make install 2>$ERROR
 #Make the installed library writable so debugging symbols can be removed later:
-chmod -v u+w /usr/lib/libtcl8.6.so
+chmod -v u+w /usr/lib/libtcl8.6.so 2>$ERROR
 #Install Tcl's headers. The next package, Expect, requires them.
-make install-private-headers
+make install-private-headers 2>$ERROR
 #Now make a necessary symbolic link:
-ln -sfv tclsh8.6 /usr/bin/tclsh
+ln -sfv tclsh8.6 /usr/bin/tclsh 2>$ERROR
 
 
 #/*Expect-5.45.4 */
-echo "Installing Expect-5.45.4 ..."
+echo "Installing Expect-5.45.4 ..." 1>$CURR_PKG
 sleep 3
-tar -xvf expect5.45.4.tar.gz
+tar -xvf expect5.45.4.tar.gz 2>$ERROR
 cd expect5.45.4
 ./configure --prefix=/usr		\
 	--with-tcl=/usr/lib		\
 	--enable-shared			\
 	--mandir=/usr/share/man		 \
-	--with-tclinclude=/usr/include
-make -j$(nproc)
-make test
-make install
-ln -svf expect5.45.4/libexpect5.45.4.so /usr/lib
+	--with-tclinclude=/usr/include 2>$ERROR
+make -j$(nproc) 2>$ERROR
+make test 2>$ERROR
+make install 2>$ERROR
+ln -svf expect5.45.4/libexpect5.45.4.so /usr/lib 2>$ERROR
 
 
 #/*DejaGNU-1.6.2 */
-echo " Installing DejaGNU-1.6.2 ..."
+echo " Installing DejaGNU-1.6.2 ..." 1>$CURR_PKG
 sleep 3
-tar -xvf dejagnu-1.6.2.tar.gz
+tar -xvf dejagnu-1.6.2.tar.gz 2>$ERROR
 cd dejagnu-1.6.2
-./configure --prefix=/usr
-makeinfo --html --no-split -o doc/dejagnu.html doc/dejagnu.texi
-makeinfo --plaintext -o doc/dejagnu.txt doc/dejagnu.tex
+./configure --prefix=/usr 2>$ERROR
+makeinfo --html --no-split -o doc/dejagnu.html doc/dejagnu.texi 2>$ERROR
+makeinfo --plaintext -o doc/dejagnu.txt doc/dejagnu.tex 2>$ERROR
 
-make install
-install -v -dm755 /usr/share/doc/dejagnu-1.6.2
-install -v -m644 doc/dejagnu.{html,txt} /usr/share/doc/dejagnu-1.6.2
+make install 2>$ERROR
+install -v -dm755 /usr/share/doc/dejagnu-1.6.2 2>$ERROR
+install -v -m644 doc/dejagnu.{html,txt} /usr/share/doc/dejagnu-1.6.2 2>$ERROR
 #To test the results, issue:
-make check
+make check 2>$ERROR
 
 
 
 
 #/*Iana-Etc-20200821 */
-echo "Installing Iana-Etc-20200821 ..."
+echo "Installing Iana-Etc-20200821 ..." 1>$CURR_PKG
 sleep 3
-tar -xvf iana-etc-20200821.tar.gz
+tar -xvf iana-etc-20200821.tar.gz 2>$ERROR
 #For this package, we only need to copy the files into place:
-cp services protocols /etc
+cp services protocols /etc 2>$ERROR
 
 
 #/*Glibc-2.32 */
-echo "Installing Glibc-2.32 ..."
+echo "Installing Glibc-2.32 ..." 1>$CURR_PKG
 sleep 3
-tar -xvf glibc-2.32.tar.xz
+tar -xvf glibc-2.32.tar.xz 2>$ERROR
 cd glibc-2.32
-patch -Np1 -i ../glibc-2.32-fhs-1.patch
+patch -Np1 -i ../glibc-2.32-fhs-1.patch 2>$ERROR
 mkdir -pv build 
 cd build
 ../configure --prefix=/usr		\
@@ -119,31 +121,31 @@ cd build
 	--enable-kernel=3.2		\
 	--enable-stack-protector=strong		\
 	--with-headers=/usr/include		\
-	libc_cv_slibdir=/lib
+	libc_cv_slibdir=/lib 2>$ERROR
 
-make -j$(nproc)
+make -j$(nproc) 2>$ERROR
 #Generally a few tests do not pass. The test failures listed below are usually safe to ignore.
 case $(uname -m) in
-	i?86)	ln -sfnv $PWD/elf/ld-linux.so.2  /lib ;;
-	x86_64)  ln -sfnv $PWD/elf/ld-linux-x86-64.so.2 /lib ;;
+	i?86)	ln -sfnv $PWD/elf/ld-linux.so.2  /lib  2>$ERROR ;;
+	x86_64)  ln -sfnv $PWD/elf/ld-linux-x86-64.so.2 /lib  2>$ERROR ;;
 esac
 
 
-make check
+make check 2>$ERROR
 
-touch /etc/ld.so.conf
+touch /etc/ld.so.conf 2>$ERROR
 #Fix the generated Makefile to skip an unneeded sanity check that fails in the LFS partial environment:
-sed '/test-installation/s@$(PERL)@echo not running@' -i ../Makefile
+sed '/test-installation/s@$(PERL)@echo not running@' -i ../Makefile 2>$ERROR
 #Install the package:
-make install
+make install 2>$ERROR
 #Install the configuration file and runtime directory for nscd:
-cp -v ../nscd/nscd.conf /etc/nscd.conf
-mkdir -pv /var/cache/nscd
+cp -v ../nscd/nscd.conf /etc/nscd.conf 2>$ERROR 
+mkdir -pv /var/cache/nscd 2>$ERROR
 
 #Install the systemd support files for nscd:
-install -v -Dm644 ../nscd/nscd.tmpfiles /usr/lib/tmpfiles.d/nscd.conf
-install -v -Dm644 ../nscd/nscd.service /lib/systemd/system/nscd.service
-mkdir -pv /usr/lib/locale
+install -v -Dm644 ../nscd/nscd.tmpfiles /usr/lib/tmpfiles.d/nscd.conf 2>$ERROR
+install -v -Dm644 ../nscd/nscd.service /lib/systemd/system/nscd.service 2>$ERROR
+mkdir -pv /usr/lib/locale 2>$ERROR
 localdef -i POSIX -f UTF-8 C.UTF-8 2> /dev/null || true
 localdef -i cs_CZ -f UTF-8 cs_CZ.UTF-8
 localdef -i de_DE -f ISO-8859-1 de_DE
@@ -192,9 +194,9 @@ EOF
 
 #Adding time zone data
 #Install and set up the time zone data with the following
-tar -xf ../../tzdata2020a.tar.gz
+tar -xf ../../tzdata2020a.tar.gz 2>$ERROR
 ZONEINFO=/usr/share/zoneinfo
-mkdir -pv $ZONEINFO/{posix,right}
+mkdir -pv $ZONEINFO/{posix,right} 
 for tz in etcetera southamerica northamerica europe africa antarctica		\
 		asia australasia backward pacificnew systemv; do
 		zic -L /dev/null -d $ZONEINFO ${tz}
@@ -231,60 +233,59 @@ rm -rf glibc-2.32
 
 
 #/*Zlib-1.2.11 */
-echo "Installing Zlib-1.2.11 ..."
+echo "Installing Zlib-1.2.11 ..." 1>$CURR_PKG
 sleep 3
-tar -xvf zlib-1.2.11.tar.xz
+tar -xvf zlib-1.2.11.tar.xz 2>$ERROR
 cd zlib-1.2.11
 
-./configure --prefix=/usr
-make 
-make check 
-make install
-mv -v /usr/lib/libz.so.* /lib
-ln -sfv ../../lib/$(readlink /usr/lib/libz.so) /usr/lib/libz.so
+./configure --prefix=/usr 2>$ERROR
+make 2>$ERROR
+make check 2>$ERROR
+make install 2>$ERROR
+mv -v /usr/lib/libz.so.* /lib 2>$ERROR
+ln -sfv ../../lib/$(readlink /usr/lib/libz.so) /usr/lib/libz.so 2>$ERROR
 
 
 #/*Bzip2-1.0.8 */
-echo "Installing Bzip2-1.0.8 ..."
+echo "Installing Bzip2-1.0.8 ..." 1>$CURR_PKG
 sleep 3
-tar -xvf bzip2-1.0.8.tar.gz
+tar -xvf bzip2-1.0.8.tar.gz 2>$ERROR
 cd bzip2-1.0.8
-echo "Patching Bzip2-1.0.8 ..."
-patch -Np1 -i ../bzip2-1.0.8-install_docs-1.patch
+echo "Patching Bzip2-1.0.8 ..." 1>$CURR_PKG
+patch -Np1 -i ../bzip2-1.0.8-install_docs-1.patch 2>$ERROR
 #The following command ensures installation of symbolic links are relative
-sed -i 's@\(ln -s -f \)$(PREFIX)/bin/@\1@' Makefile
+sed -i 's@\(ln -s -f \)$(PREFIX)/bin/@\1@' Makefile 2>$ERROR
 #Ensure the man pages are installed into the correct location:
-sed -i "s@(PREFIX)/man@(PREFIX)/share/man@g" Makefile
+sed -i "s@(PREFIX)/man@(PREFIX)/share/man@g" Makefile 2>$ERROR
 #Prepare Bzip2 for compilation with:
-make -f Makefile-libbz2_so
-make clean
-make 
-make PREFIX=/usr install
+make -f Makefile-libbz2_so 2>$ERROR
+make clean 2>$ERROR
+make 2>$ERROR
+make PREFIX=/usr install 2>$ERROR
 #nstall the shared bzip2 binary into the /bin directory, make some necessary symbolic links, and clean up:
-cp -v bzip2-shared /bin/bzip2
-cp -av libbz2.so* /lib
-ln -sv ../../lib/libbz2.so.1.0 /usr/lib/libbz2.so
-rm -v /usr/bin/{bunzip2,bzcat,bzip2}
-ln -sv bzip2 /bin/bunzip2
-ln -sv bzip2 /bin/bzcat
+cp -v bzip2-shared /bin/bzip2 2>$ERROR
+cp -av libbz2.so* /lib 2>$ERROR
+ln -sv ../../lib/libbz2.so.1.0 /usr/lib/libbz2.so 2>$ERROR
+rm -v /usr/bin/{bunzip2,bzcat,bzip2} 2>$ERROR
+ln -sv bzip2 /bin/bunzip2 2>$ERROR
+ln -sv bzip2 /bin/bzcat 2>$ERROR
 
 cd ../
 rm -rf bzip2-1.0.8
 
 
 #/* Xz-5.2.5 */
-echo "Installing Xz-5.2.5 ..."
+echo "Installing Xz-5.2.5 ..." 1>$CURR_PKG
 sleep 2
-tar -xvf xz-5.2.5.tar.xz
+tar -xvf xz-5.2.5.tar.xz 2>$ERROR
 cd xz-5.2.5
 ./configure --prefix=/usr		\
 	--disable-static 		\
-	--docdir=/usr/share/doc/xz-5.2.5
-make -j$(nproc)
-make check
-make install
-mv -v
-/usr/bin/{lzma,unlzma,lzcat,xz,unxz,xzcat} /bin
+	--docdir=/usr/share/doc/xz-5.2.5 2>$ERROR
+make -j$(nproc) 2>$ERROR
+make check 2>$ERROR
+make install 2>$ERROR
+mv -v /usr/bin/{lzma,unlzma,lzcat,xz,unxz,xzcat} /bin
 mv -v /usr/lib/liblzma.so.* /lib
 ln -svf ../../lib/$(readlink /usr/lib/liblzma.so) /usr/lib/liblzma.so
 
@@ -294,58 +295,58 @@ rm -rf xz-5.2.5
 
 
 #/* Zstd-1.4.5 */
-echo "Installing Zstd-1.4.5  ..."
+echo "Installing Zstd-1.4.5  ..." 1>$CURR_PKG
 sleep 2
-tar -xvf zstd-1.4.5.tar.gz 
+tar -xvf zstd-1.4.5.tar.gz 2>$ERROR
 cd zstd-1.4.5
-make -j$(nproc)
-make prefix=/usr install
+make -j$(nproc) 2>$ERROR
+make prefix=/usr install 2>$ERROR
 #Remove the static library and move the shared library to /lib. Also, the .so file in /usr/lib will need to be recreated
-rm -v /usr/lib/libzstd.a
-mv -v /usr/lib/libzstd.so.* /lib
-ln -sfv ../../lib/$(readlink /usr/lib/libzstd.so) /usr/lib/libzstd.so
+rm -v /usr/lib/libzstd.a 2>$ERROR
+mv -v /usr/lib/libzstd.so.* /lib 2>$ERROR
+ln -sfv ../../lib/$(readlink /usr/lib/libzstd.so) /usr/lib/libzstd.so 2>$ERROR
 
 cd ../
 rm -rf zstd-1.4.5
 
 
-#/* File-5.39 */
-echo "Installing File-5.39 ..."
+#/* File-5.39 */ 
+echo "Installing File-5.39 ..." 1>$CURR_PKG
 sleep 2
-tar -xvf file-5.39.tar.gz
+tar -xvf file-5.39.tar.gz 
 cd file-5.39
-./configure --prefix=/usr
-make -j$(nproc)
-make check 
-make install
+./configure --prefix=/usr 2>$ERROR
+make -j$(nproc)  2>$ERROR
+make check  2>$ERROR
+make install 2>$ERROR
 
 cd ../
 rm -rf file-5.39
 
 
 #/* Readline-8.0 */
-echo "Installing Readline-8.0 ..."
+echo "Installing Readline-8.0 ..." 1>$CURR_PKG
 sleep 2
 tar -xvf readline-8.0.tar.gz
 cd readline-8.0
 #Reinstalling Readline will cause the old libraries to be moved to <libraryname>.old. While this is normally not a
 #problem, in some cases it can trigger a linking bug in ldconfig. This can be avoided by issuing the following two sed
-sed -i '/MV.*old/d' Makefile.in
-sed -i '/{OLDSUFF}/c:' support/shlib-install
+sed -i '/MV.*old/d' Makefile.in 2>$ERROR
+sed -i '/{OLDSUFF}/c:' support/shlib-install 2>$ERROR
 
 ./configure --prefix=/usr		\
 	--disable-static		 \
 	--with-curses			\
-	--docdir=/usr/share/doc/readline-8.0
-make SHLIB_LIBS="-lncursesw"
-make SHLIB_LIBS="-lncursesw" install
+	--docdir=/usr/share/doc/readline-8.0 2>$ERROR
+make SHLIB_LIBS="-lncursesw" 2>$ERROR
+make SHLIB_LIBS="-lncursesw" install 2>$ERROR
 #Now move the dynamic libraries to a more appropriate location and fix up some permissions and symbolic links:
-mv -v /usr/lib/lib{readline,history}.so.* /lib
-chmod -v u+w /lib/lib{readline,history}.so.*
-ln -sfv ../../lib/$(readlink /usr/lib/libreadline.so) /usr/lib/libreadline.so
-ln -sfv ../../lib/$(readlink /usr/lib/libhistory.so ) /usr/lib/libhistory.so
+mv -v /usr/lib/lib{readline,history}.so.* /lib 2>$ERROR
+chmod -v u+w /lib/lib{readline,history}.so.* 2>$ERROR
+ln -sfv ../../lib/$(readlink /usr/lib/libreadline.so) /usr/lib/libreadline.so 2>$ERROR
+ln -sfv ../../lib/$(readlink /usr/lib/libhistory.so ) /usr/lib/libhistory.so 2>$ERROR
 #If desired, install the documentation
-install -v -m644 doc/*.{ps,pdf,html,dvi} /usr/share/doc/readline-8.0
+install -v -m644 doc/*.{ps,pdf,html,dvi} /usr/share/doc/readline-8.0 2>$ERROR
 
 
 cd ../
@@ -354,17 +355,17 @@ rm -rf readline-8.0
 
 
 #/* M4-1.4.18 */
-echo "Installing M4-1.4.18 ..."
+echo "Installing M4-1.4.18 ..." 2>$CURR_PKG
 sleep 3
 tar -xvf m4-1.4.18.tar.xz
 cd m4-1.4.18
 #First, make some fixes required by glibc-2.28 and later:
-sed -i 's/IO_ftrylockfile/IO_EOF_SEEN/' lib/*.c
-echo "#define _IO_IN_BACKUP 0x100" >> lib/stdio-impl.h
-./configure --prefix=/usr
-make -j$(nproc)
-make check 
-make install
+sed -i 's/IO_ftrylockfile/IO_EOF_SEEN/' lib/*.c 2>$ERROR
+echo "#define _IO_IN_BACKUP 0x100" >> lib/stdio-impl.h 2>$ERROR
+./configure --prefix=/usr 2>$ERROR
+make -j$(nproc) 2>$ERROR
+make check  2>$ERROR
+make install 2>$ERROR
 
 cd ../
 rm -rf m4-1.4.18
@@ -372,46 +373,46 @@ rm -rf m4-1.4.18
 
 
 #/*Bc-3.1.5 */
-echo "Installing Bc-3.1.5 ..."
+echo "Installing Bc-3.1.5 ..." 1>$CURR_PKG
 sleep 2
 tar -xvf bc-3.1.5.tar.xz
 cd bc-3.1.5
-PREFIX=/usr CC=gcc CFLAGS="-std=c99" ./configure.sh -G -O3
-make -j$(nproc)
-make test
-make install
+PREFIX=/usr CC=gcc CFLAGS="-std=c99" ./configure.sh -G -O3 2>$ERROR
+make -j$(nproc) 2>$ERROR
+make test 2>$ERROR
+make install 2>$ERROR
 
 
 cd ../
 rm -rf bc-3.1.5
 
 #/* Flex-2.6.4 */
-echo "Installing Flex-2.6.4 ..."
+echo "Installing Flex-2.6.4 ..." 1>$CURR_PKG
 sleep 2
 tar -xvf flex-2.6.4.tar.gz
 cd flex-2.6.4
-./configure --prefix=/usr --docdir=/usr/share/doc/flex-2.6.4
-make  -j$(nproc)
-make check
-make install
+./configure --prefix=/usr --docdir=/usr/share/doc/flex-2.6.4 2>$ERROR
+make  -j$(nproc) 2>$ERROR
+make check 2>$ERROR
+make install 2>$ERROR
 #A few programs do not know about flex yet and try to run its predecessor, lex. To support those programs, create a
 #symbolic link named lex that runs flex in lex emulation mode:
-ln -sv flex /usr/bin/lex
+ln -sv flex /usr/bin/lex 2>$ERROR
 
 cd ../
 rm -rf flex-2.6.4
 
 
 #/* Binutils-2.35 */
-echo "Installing Binutils-2.35 ..."
+echo "Installing Binutils-2.35 ..." 1>$CURR_PKG
 sleep 2
 tar -xvf binutils-2.35.tar.xz
 cd binutils-2.35
 echo "Verify that the PTYs are working properly inside the chroot environment by performing a simple test: "
-expect -c "spawn ls"
+expect -c "spawn ls" 2>$ERROR
 
 #Now remove one test that prevents the tests from running to completion:
-sed -i '/@\tincremental_copy/d' gold/testsuite/Makefile.in
+sed -i '/@\tincremental_copy/d' gold/testsuite/Makefile.in 2>$ERROR
 mkdir -pv build
 cd build
 ../configure --prefix=/usr		\
@@ -421,11 +422,11 @@ cd build
 		--enable-shared		\
 		--disable-werror	\
 		--enable-64-bit-bfd	\
-		--with-system-zlib
-make tooldir=/usr
+		--with-system-zlib 2>$ERROR
+make tooldir=/usr 2>$ERROR
 echo "The test suite for Binutils in this section is considered critical. Do not skip it under any circumstances."
-make -k check
-make tooldir=/usr install
+make -k check 2>$ERROR
+make tooldir=/usr install 2>$ERROR
 
 
 cd ../..
@@ -433,7 +434,7 @@ rm -rf binutils-2.35
 
 
 #/* GMP-6.2.0 */
-echo "Installing GMP-6.2.0 ..."
+echo "Installing GMP-6.2.0 ..." 1>$CURR_PKG
 sleep 2
 tar -xvf gmp-6.2.0.tar.xz
 cd gmp-6.2.0
@@ -441,7 +442,7 @@ cd gmp-6.2.0
 #If you are building for 32-bit x86, but you have a CPU which is capable of running 64-bit code and you
 #have specified CFLAGS in the environment, the configure script will attempt to configure for 64-bits and fail.
 #Avoid this by invoking the configure command below with
-ABI=32 ./configure ...
+ABI=32 ./configure ... 
 #The default settings of GMP produce libraries optimized for the host processor. If libraries suitable for
 #processors less capable than the host's CPU are desired, generic libraries can be created by running the
 #following:
@@ -451,38 +452,38 @@ cp -v configfsf.sub config.sub
 ./configure --prefix=/usr		\
 	--enable-cxx			\
 	--disable-static 		\
-	--docdir=/usr/share/doc/gmp-6.2.0
+	--docdir=/usr/share/doc/gmp-6.2.0 2>$ERROR
 
-make -j$(nproc)
-make html
+make -j$(nproc) 2>$ERROR
+make html 2>$ERROR
 echo "The test suite for GMP in this section is considered critical. Do not skip it under any circumstances"
 make check 2>&1 | tee gmp-check-log
 echo "Ensure that all 197 tests in the test suite passed. Check the results by issuing the following command:"
-awk '/# PASS:/{total+=$3} ; END{print total}' gmp-check-log
+awk '/# PASS:/{total+=$3} ; END{print total}' gmp-check-log 2>$ERROR
 echo "Install the package and its documentation:"
-make install
-make install-html
+make install 2>$ERROR
+make install-html 2>$ERROR
 
 cd ../
 rm -rf gmp-6.2.0
 
 
 #/* MPFR-4.1.0 */
-echo " Installing MPFR-4.1.0 ..."
+echo " Installing MPFR-4.1.0 ..." 1>$CURR_PKG
 sleep 2
 tar -xvf mpfr-4.1.0.tar.xz
 cd mpfr-4.1.0
 ./configure --prefix=/usr		\
 	--disable-static		\
 	--enable-thread-safe	 	\
-	--docdir=/usr/share/doc/mpfr-4.1.0
-make
-make html
+	--docdir=/usr/share/doc/mpfr-4.1.0 2>$ERROR
+make 2>$ERROR
+make html 2>$ERROR
 echo "The test suite for MPFR in this section is considered critical. Do not skip it under any circumstances"
-make check
+make check 2>$ERROR
 echo "Install the package and its documentation:"
-make install
-make install-html
+make install 2>$ERROR
+make install-html 2>$ERROR
 
 cd ../
 rm -rf mpfr-4.1.0
@@ -490,19 +491,19 @@ rm -rf mpfr-4.1.0
 
 
 #/* MPC-1.1.0 */
-echo "Installing MPC-1.1.0 ..."
+echo "Installing MPC-1.1.0 ..." 1>$CURR_PKG
 sleep 2
 tar -xvf mpc-1.1.0.tar.gz
 cd mpc-1.1.0
 ./configure --prefix=/usr		\
 	--disable-static 		\
-	--docdir=/usr/share/doc/mpc-1.1.0
-make
-make html
+	--docdir=/usr/share/doc/mpc-1.1.0 2>$ERROR
+make 2>$ERROR
+make html 2>$ERROR
 echo "To test the results, issue:"
-make check 
-make install
-make install-html
+make check 2>$ERROR
+make install 2>$ERROR
+make install-html 2>$ERROR
 
 
 cd ../
@@ -510,22 +511,22 @@ rm -rf mpc-1.1.0
 
 
 #/* Attr-2.4.48 */
-echo "Installing Attr-2.4.48 ..."
+echo "Installing Attr-2.4.48 ..." 1>$CURR_PKG
 sleep 2
 tar -xvf attr-2.4.48.tar.gz
 cd attr-2.4.48
 ./configure --prefix=/usr		\
 	--disable-static		 \
 	--sysconfdir=/etc 		 \
-	--docdir=/usr/share/doc/attr-2.4.48
-make 
+	--docdir=/usr/share/doc/attr-2.4.48 2>$ERROR
+make 2>$ERROR
 #The tests need to be run on a filesystem that supports extended attributes such as the ext2, ext3, or ext4 filesystems.
 #To test the results, issue:
-make check 
-make install
+make check 2>$ERROR
+make install 2>$ERROR
 echo "The shared library needs to be moved to /lib, and as a result the .so file in /usr/lib will need to be recreated"
-mv -v /usr/lib/libattr.so.* /lib
-ln -sfv ../../lib/$(readlink /usr/lib/libattr.so) /usr/lib/libattr.so
+mv -v /usr/lib/libattr.so.* /lib 2>$ERROR
+ln -sfv ../../lib/$(readlink /usr/lib/libattr.so) /usr/lib/libattr.so 2>$ERROR
 
 
 cd ../
@@ -533,19 +534,19 @@ rm -rf attr-2.4.48
 
 
 #/* Acl-2.2.53 */
-echo "Installing Acl-2.2.53 ..."
+echo "Installing Acl-2.2.53 ..." 1>$CURR_PKG
 sleep 2
 tar -xvf acl-2.2.53.tar.gz
 cd acl-2.2.53
 ./configure --prefix=/usr		\
 	--disable-static		\
 	--libexecdir=/usr/lib 		\
-	--docdir=/usr/share/doc/acl-2.2.53
-make 
-make install
+	--docdir=/usr/share/doc/acl-2.2.53 2>$ERROR
+make 2>$ERROR
+make install 2>$ERROR
 #The shared library needs to be moved to /lib, and as a result the .so file in /usr/lib will need to be recreated:
-mv -v /usr/lib/libacl.so.* /lib
-ln -sfv ../../lib/$(readlink /usr/lib/libacl.so) /usr/lib/libacl.so
+mv -v /usr/lib/libacl.so.* /lib 2>$ERROR
+ln -sfv ../../lib/$(readlink /usr/lib/libacl.so) /usr/lib/libacl.so 2>$ERROR
 
 
 cd ../
@@ -553,46 +554,46 @@ rm -rf acl-2.2.53
 
 
 #/* Libcap-2.42 */
-echo "Installing Libcap-2.42 ..."
+echo "Installing Libcap-2.42 ..." 1>$CURR_PKG
 sleep 2
 tar -xvf libcap-2.42.tar.xz
 cd libcap-2.42
 echo "Prevent a static library from being installed:"
-sed -i '/install -m.*STACAPLIBNAME/d' libcap/Makefile
-make lib=lib
+sed -i '/install -m.*STACAPLIBNAME/d' libcap/Makefile 2>$ERROR
+make lib=lib 2>$ERROR
 echo "To test the results, issue:"
-make test
+make test 2>$ERROR
 echo "Install the package and do some cleanup:"
-make lib=lib PKGCONFIGDIR=/usr/lib/pkgconfig install
+make lib=lib PKGCONFIGDIR=/usr/lib/pkgconfig install 2>$ERROR
 chmod -v 755 /lib/libcap.so.2.42
 mv -v /lib/libpsx.a /usr/lib
 rm -v /lib/libcap.so
-ln -sfv ../../lib/libcap.so.2 /usr/lib/libcap.so
+ln -sfv ../../lib/libcap.so.2 /usr/lib/libcap.so 2>$ERROR
 
 cd ../
 rm -rf libcap-2.42
 
 #/* Shadow-4.8.1 */
-echo "Installing Shadow-4.8.1 ..."
+echo "Installing Shadow-4.8.1 ..." 1>$CURR_PKG
 sleep 2
 tar -xvf shadow-4.8.1.tar.xz
 cd shadow-4.8.1
 echo "Disable the installation of the groups program and its man pages, as Coreutils provides a better version"
-sed -i 's/groups$(EXEEXT) //' src/Makefile.in
+sed -i 's/groups$(EXEEXT) //' src/Makefile.in 2>$ERROR
 find man -name Makefile.in -exec sed -i 's/groups\.1 / /' {} \;
 find man -name Makefile.in -exec sed -i 's/getspnam\.3 / /' {} \;
 find man -name Makefile.in -exec sed -i 's/passwd\.5 / /' {} \;
 
 #If you chose to build Shadow with Cracklib support, run the following:
-sed -i 's:DICTPATH.*:DICTPATH\t/lib/cracklib/pw_dict:' etc/login.defs
+sed -i 's:DICTPATH.*:DICTPATH\t/lib/cracklib/pw_dict:' etc/login.defs 2>$ERROR
 echo "Make a minor change to make the first group number generated by useradd 1000:"
-sed -i 's/1000/999/' etc/useradd
+sed -i 's/1000/999/' etc/useradd 2>$ERROR
 echo "Prepare Shadow for compilation:"
 touch /usr/bin/passwd
 ./configure --sysconfdir=/etc	 \
-	--with-group-name-max-length=32
-make 
-make install
+	--with-group-name-max-length=32 2>$ERROR
+make 2>$ERROR
+make install 2>$ERROR
 echo "Configuring Shadow"
 echo "To enable shadowed passwords, run the following command:"
 pwconv
@@ -606,7 +607,7 @@ rm -rf shadow-4.8.1
 
 
 #/* GCC-10.2.0 */
-echo "Installing GCC-10.2.0 ..."
+echo "Installing GCC-10.2.0 ..." 1>$CURR_PKG
 sleep 2
 tar -xvf gcc-10.2.0.tar.xz
 cd gcc-10.2.0
@@ -614,7 +615,7 @@ cd gcc-10.2.0
 case $(uname -m) in
 x86_64)
 sed -e '/m64=/s/lib64/lib/' \
-	-i.orig gcc/config/i386/t-linux64	;;
+	-i.orig gcc/config/i386/t-linux64 2>$ERROR	;;
 esac
 
 mkdir -pv build 
@@ -624,18 +625,18 @@ cd build
 		--enable-languages=c,c++	\
 		--disable-multilib		\
 		--disable-bootstrap		\
-		--with-system-zlib
+		--with-system-zlib 2>$ERROR
 
-make -j$(nproc)
-ulimit -s 32768
+make -j$(nproc) 2>$ERROR
+ulimit -s 32768 
 echo "Test the results as a non-privileged user, but do not stop at errors:"
 chown -Rv tester .
-su tester -c "PATH=$PATH make -k check"
+su tester -c "PATH=$PATH make -k check" 2>$ERROR
 echo "To receive a summary of the test suite results, run:"
 ../contrib/test_summary
 
 echo "Install the package and remove an unneeded directory:"
-make install
+make install 2>$ERROR
 rm -rf /usr/lib/gcc/$(gcc -dumpmachine)/10.2.0/include-fixed/bits/
 echo "The GCC build directory is owned by tester now and the ownership of the installed header directory (and its
 content) will be incorrect. Change the ownership to root user and group:"
@@ -674,25 +675,25 @@ rm -rf gcc-10.2.0
 
 
 #/* Pkg-config-0.29.2 */
-echo "Installing Pkg-config-0.29.2 ..."
+echo "Installing Pkg-config-0.29.2 ..." 1>$CURR_PKG
 sleep 2
 tar -xvf pkg-config-0.29.2.tar.gz
 cd pkg-config-0.29.2
 ./configure --prefix=/usr		\
 	--with-internal-glib		\
 	--disable-host-tool		\
-	--docdir=/usr/share/doc/pkg-config-0.29.2
+	--docdir=/usr/share/doc/pkg-config-0.29.2 2>$ERROR
 
-make 
-make check
-make install
+make 2>$ERROR
+make check 2>$ERROR
+make install 2>$ERROR
 
 cd ../
 rm -rf pkg-config-0.29.2
   
 
 #/*Ncurses-6.2 */
-echo "Installing Ncurses-6.2 ..."
+echo "Installing Ncurses-6.2 ..." 1>$CURR_PKG
 sleep 2
 tar -xvf ncurses-6.2.tar.gz
 cd ncurses-6.2
@@ -705,9 +706,9 @@ sed -i '/LIBTOOL_INSTALL/d' c++/Makefile.in
 	--without-debug			\
 	--without-normal		\
 	--enable-pc-files		\
-	--enable-widec
-make 
-make install
+	--enable-widec 2>$ERROR
+make 2>$ERROR
+make install 2>$ERROR
 #Move the shared libraries to the /lib directory, where they are expected to reside:
 mv -v /usr/lib/libncursesw.so.6* /lib
 #Because the libraries have been moved, one symlink points to a non-existent file. Recreate it:
@@ -734,13 +735,13 @@ cp -v -R doc/* /usr/share/doc/ncurses-6.2
 #libraries because of some binary-only application or to be compliant with LSB, build the package again with
 #the following commands:
 
-make distclean
+make distclean 2>$ERROR
 ./configure --prefix=/usr		\
 	--with-shared			\
 	--without-normal		 \
 	--without-debug 		\
 	--without-cxx-binding 		\
-	--with-abi-version=5
+	--with-abi-version=5 2>$ERROR
 make sources libs
 cp -av lib/lib*.so.5* /usr/lib
 
@@ -750,48 +751,48 @@ rm -rf ncurses-6.2
 
 
 #/* Sed-4.8 */
-echo "Installing Sed-4.8 ..."
+echo "Installing Sed-4.8 ..." 1>$CURR_PKG
 sleep 2
 tar -xvf sed-4.8.tar.xz
 cd sed-4.8
-./configure --prefix=/usr --bindir=/bin
+./configure --prefix=/usr --bindir=/bin 2>$ERROR
 #Compile the package and generate the HTML documentation:
-make
-make html
+make 2>$ERROR
+make html 2>$ERROR
 #To test the results, issue:
 chown -Rv tester .
 su tester -c "PATH=$PATH make check"
 #Install the package and its documentation:
-make install
-install -d -m755 /usr/share/doc/sed-4.8
-install -m644 doc/sed.html /usr/share/doc/sed-4.8
+make install 2>$ERROR
+install -d -m755 /usr/share/doc/sed-4.8 2>$ERROR 
+install -m644 doc/sed.html /usr/share/doc/sed-4.8 2>$ERROR
 
 cd ../
 rm -rf sed-4.8
 
 
 #/* Psmisc-23.3 */
-echo "Installing Psmisc-23.3 ..."
+echo "Installing Psmisc-23.3 ..." 1>$CURR_PKG
 sleep 2
 tar -xvf psmisc-23.3.tar.xz
 cd psmisc-23.3
 #Prepare Psmisc for compilation:
-./configure --prefix=/usr
+./configure --prefix=/usr 2>$ERROR
 #Compile the package:
-make
+make 2>$ERROR
 #This package does not come with a test suite.
 #Install the package:
-make install
+make install 2>$ERROR
 #Finally, move the killall and fuser programs to the location specified by the FHS:
-mv -v /usr/bin/fuser /bin
-mv -v /usr/bin/killall /bin
+mv -v /usr/bin/fuser /bin 2>$ERROR
+mv -v /usr/bin/killall /bin 2>$ERROR
 
 cd ../
 rm -rf psmisc-23.3
 
 
 #/* Gettext-0.21 */
-echo "Installing Gettext-0.21 ..."
+echo "Installing Gettext-0.21 ..." 1>$CURR_PKG
 sleep 2
 tar -xvf gettext-0.21.tar.xz
 cd gettext-0.21
@@ -799,32 +800,32 @@ cd gettext-0.21
 #Prepare Gettext for compilation:
 ./configure --prefix=/usr		\
 	--disable-static		 \
-	--docdir=/usr/share/doc/gettext-0.21
+	--docdir=/usr/share/doc/gettext-0.21 2>$ERROR
 #Compile the package:
-make
+make 2>$ERROR
 #To test the results (this takes a long time, around 3 SBUs), issue:
-make check
+make check 2>$ERROR
 #Install the package:
-make install
-chmod -v 0755 /usr/lib/preloadable_libintl.so
+make install 2>$ERROR
+chmod -v 0755 /usr/lib/preloadable_libintl.so 2>$ERROR
 
 cd ../
 rm -rf gettext-0.21
   
 
 #/* Bison-3.7.1 */
-echo "Installing Bison-3.7.1 ...."
+echo "Installing Bison-3.7.1 ...." 1>$CURR_PKG
 sleep 2
 tar -xvf bison-3.7.1.tar.xz
 cd bison-3.7.1
 #Prepare Bison for compilation:
-./configure --prefix=/usr --docdir=/usr/share/doc/bison-3.7.1
+./configure --prefix=/usr --docdir=/usr/share/doc/bison-3.7.1 2>$ERROR
 #Compile the package:
-make
+make 2>$ERROR
 #To test the results (about 5.5 SBU), issue:
-make check
+make check 2>$ERROR
 #Install the package:
-make install
+make install 2>$ERROR
 
 cd ../
 rm -rf bison-3.7.1
@@ -833,47 +834,47 @@ rm -rf bison-3.7.1
 
 
 #/* Grep-3.4 */
-echo "Installing Grep-3.4 ..."
+echo "Installing Grep-3.4 ..." 1>$CURR_PKG
 sleep 2
 tar -xvf grep-3.4.tar.xz
 cd grep-3.4
 #Prepare Grep for compilation:
-./configure --prefix=/usr --bindir=/bin
+./configure --prefix=/usr --bindir=/bin 2>$ERROR
 #Compile the package:
-make
+make 2>$ERROR
 #To test the results, issue:
-make check
+make check 2>$ERROR
 #Install the package:
-make install
+make install 2>$ERROR
 
 cd ../
 rm -rf grep-3.4
 
 
 #/*Bash-5.0 */
-echo "Installing Bash-5.0 ..."
+echo "Installing Bash-5.0 ..." 1>$CURR_PKG
 sleep 2
 tar -xvf bash-5.0.tar.gz
 cd bash-5.0
 #ncorporate some upstream fixes:
-patch -Np1 -i ../bash-5.0-upstream_fixes-1.patch
+patch -Np1 -i ../bash-5.0-upstream_fixes-1.patch 2>$ERROR
 #repare Bash for compilation:
 ./configure --prefix=/usr			\
 	--docdir=/usr/share/doc/bash-5.0 	\
 	--without-bash-malloc			\
-	--with-installed-readline
+	--with-installed-readline 2>$ERROR
 #Compile the package:
-make
+make 2>$ERROR
 #To prepare the tests, ensure that the tester user can write to the sources tree
 echo "To prepare the tests, ensure that the tester user can write to the sources tree:"
-chown -Rv tester
+chown -Rv tester 2>$ERROR
 #Now, run the tests as the tester user:
 echo "Now, run the tests as the tester user:"
 su tester << EOF
 PATH=$PATH make tests < $(tty)
 EOF
 #Install the package and move the main executable to /bin:
-make install
+make install 2>$ERROR
 mv -vf /usr/bin/bash /bin
 #Run the newly compiled bash program (replacing the one that is currently being executed):
 exec /bin/bash --login +h
@@ -882,28 +883,28 @@ cd ../
 rm -rf bash-5.0
 
 #/* Libtool-2.4.6 */
-echo "Installing Libtool-2.4.6 ..."
+echo "Installing Libtool-2.4.6 ..." 1>$CURR_PKG
 sleep 2
 tar -xvf libtool-2.4.6.tar.xz
 cd libtool-2.4.6
 #Prepare Libtool for compilation:
-./configure --prefix=/usr
+./configure --prefix=/usr 2>$ERROR
 #Compile the package:
-make
+make 2>$ERROR
 #To test the results, issue:
 echo " Testing the results"
-make check
+make check 2>$ERROR
 
 #Install the package:
-echo "Installing packages"
-make install
+echo "Installing packages" 
+make install 2>$ERROR
 
 cd ../
 rm -rf libtool-2.4.6
 
 
 #/*  GDBM-1.18.1 */
-echo "Installing GDBM-1.18.1 ...."
+echo "Installing GDBM-1.18.1 ...." 1>$CURR_PKG
 sleep 2
 tar -xvf gdbm-1.18.1.tar.gz
 cd gdbm-1.18.1
@@ -912,40 +913,40 @@ sed -r -i '/^char.*parseopt_program_(doc|args)/d' src/parseopt.c
 #Prepare GDBM for compilation:
 ./configure --prefix=/usr		\
 	--disable-static		 \
-	--enable-libgdbm-compat
+	--enable-libgdbm-compat 2>$ERROR
 #Compile the package:
-make
+make 2>$ERROR
 #To test the results, issue:
 echo "testing results"
-make check
+make check 2>$ERROR
 #Install the package:
-make install
+make install 2>$ERROR
 
 cd ../
 rm -rf gdbm-1.18.1
 
 
 #/* Gperf-3.1 */
-echo "Installing Gperf-3.1 ..."
+echo "Installing Gperf-3.1 ..." 1>$CURR_PKG
 sleep 2
 tar -xvf gperf-3.1.tar.gz
 cd gperf-3.1
 
 #Prepare Gperf for compilation:
-./configure --prefix=/usr --docdir=/usr/share/doc/gperf-3.1
+./configure --prefix=/usr --docdir=/usr/share/doc/gperf-3.1 2>$ERROR
 #Compile the package:
-make
+make 2>$ERROR
 #The tests are known to fail if running multiple simultaneous tests (-j option greater than 1). To test the results, issue:
-echo "Testing results"
-make -j1 check
+echo "Testing results" 2>$ERROR
+make -j1 check 2>$ERROR
 #Install the package:
-make install
+make install 2>$ERROR
 
 cd ../
 rm -rf gperf-3.1
 
 #/* Expat-2.2.9 */
-echo "Installing Expat-2.2.9 ..."
+echo "Installing Expat-2.2.9 ..." 1>$CURR_PKG
 sleep 2
 tar -xvf expat-2.2.9.tar.xz
 cd expat-2.2.9
@@ -953,14 +954,14 @@ cd expat-2.2.9
 #Prepare Expat for compilation:
 ./configure --prefix=/usr		\
 	--disable-static \
-	--docdir=/usr/share/doc/expat-2.2.9
+	--docdir=/usr/share/doc/expat-2.2.9 2>$ERROR
 #Compile the package:
-make
+make 2>$ERROR
 #To test the results, issue:
 echo "Testing result "
-make check
+make check 2>$ERROR
 #Install the package:
-make install
+make install 2>$ERROR
 #If desired, install the documentation:
 install -v -m644 doc/*.{html,png,css} /usr/share/doc/expat-2.2.9
 
@@ -969,7 +970,7 @@ rm -rf expat-2.2.9
 
 
 #/* Inetutils-1.9.4 */
-echo "Installing Inetutils-1.9.4 ..."
+echo "Installing Inetutils-1.9.4 ..." 1>$CURR_PKG
 sleep 2
 tar -xvf inetutils-1.9.4.tar.xz
 cd inetutils-1.9.4
@@ -982,16 +983,16 @@ cd inetutils-1.9.4
 	--disable-rexec			\
 	--disable-rlogin		\
 	--disable-rsh			\
-	--disable-servers
+	--disable-servers 2>$ERROR
 
 #Compile the package:
-make
+make 2>$ERROR
 #To test the results, issue:
 echo "Testing result "
-make check
+make check 2>$ERROR
 
 #Install the package:
-make install
+make install 2>$ERROR
 #Move some programs so they are available if /usr is not accessible:
 mv -v /usr/bin/{hostname,ping,ping6,traceroute} /bin
 mv -v /usr/bin/ifconfig /sbin
@@ -1001,7 +1002,7 @@ rm -rf inetutils-1.9.4
 
 
 #/*Perl-5.32.0 */
-echo "Installing Perl-5.32.0 "
+echo "Installing Perl-5.32.0 " 1>$CURR_PKG
 sleep 2
 tar -xvf perl-5.32.0.tar.xz
 cd perl-5.32.0
@@ -1020,14 +1021,14 @@ sh Configure -des					\
 	-Dman3dir=/usr/share/man/man3			\
 	-Dpager="/usr/bin/less -isR"			\
 	-Duseshrplib					\
-	-Dusethreads
+	-Dusethreads 2>$ERROR
 #Compile the package:
-make
+make 2>$ERROR
 #To test the results (approximately 11 SBU), issue:
 echo "Testing results "
-make test
+make test 2>$ERROR
 #Install the package and clean up:
-make install
+make install 2>$ERROR
 unset BUILD_ZLIB BUILD_BZIP2
 
 cd ../
@@ -1035,38 +1036,38 @@ rm -rf perl-5.32.0
 
 
 #/* XML::Parser-2.46 */
-echo "Installing XML::Parser-2.46 ..."
+echo "Installing XML::Parser-2.46 ..." 1>$CURR_PKG
 sleep 2
 tar -xvf XML-Parser-2.46.tar.gz
 cd XML-Parser-2.46
 #Prepare XML::Parser for compilation:
-perl Makefile.PL
+perl Makefile.PL 2>$ERROR
 #Compile the package:
-make
+make 2>$ERROR
 #To test the results, issue:
-make test
+make test 2>$ERROR
 #Install the package:
-make install
+make install 2>$ERROR
 
 cd ../
 r -rf XML-Parser-2.46 
 
 #/* Intltool-0.51.0 */
-echo "Installing Intltool-0.51.0 ..."
+echo "Installing Intltool-0.51.0 ..." 1>$CURR_PKG
 sleep 2
 tar -xvf intltool-0.51.0.tar.gz
 cd intltool-0.51.0
 #First fix a warning that is caused by perl-5.22 and later:
-sed -i 's:\\\${:\\\$\\{:' intltool-update.in
+sed -i 's:\\\${:\\\$\\{:' intltool-update.in 2>$ERROR
 #Prepare Intltool for compilation:
-./configure --prefix=/usr
+./configure --prefix=/usr 2>$ERROR
 #Compile the package:
-make
+make 2>$ERROR
 #To test the results, issue:
 echo "Testing rsults "
-make check
+make check 2>$ERROR
 #Install the package:
-make install
+make install 2>$ERROR
 install -v -Dm644 doc/I18N-HOWTO /usr/share/doc/intltool-0.51.0/I18N-HOWTO
 
 
@@ -1076,7 +1077,7 @@ rm -rf intltool-0.51.0
 
 
 #/* Autoconf-2.69 */
-echo "Installing Autoconf-2.69 ..."
+echo "Installing Autoconf-2.69 ..." 1>$CURRR_PKG
 sleep 2
 tar -xvf autoconf-2.69.tar.xz
 cd autoconf-2.69
@@ -1084,43 +1085,43 @@ cd autoconf-2.69
 sed -i '361 s/{/\\{/' bin/autoscan.in
 
 #Prepare Autoconf for compilation:
-./configure --prefix=/usr
+./configure --prefix=/usr 2>$ERROR
 #Compile the package:
-make
+make 2>$ERROR
 #The test suite is currently broken by bash-5 and libtool-2.4.3. To run the tests anyway, issue:
 echo "testing results"
-make check
+make check 2>$ERROR
 #Install the package:
-make install
+make install 2>$ERROR
 
 cd ../
 rm -rf autoconf-2.69
 
 
 #/* Automake-1.16.2 */
-echo "Installing Automake-1.16.2 ..."
+echo "Installing Automake-1.16.2 ..." 1>$CURR_PKG
 sleep 2
 tar -xvf automake-1.16.2.tar.xz
 cd automake-1.16.2
-Fix a failing test:
+#Fix a failing test:
 sed -i "s/''/etags/" t/tags-lisp-space.sh
 #Prepare Automake for compilation:
-./configure --prefix=/usr --docdir=/usr/share/doc/automake-1.16.2
+./configure --prefix=/usr --docdir=/usr/share/doc/automake-1.16.2 2>$ERROR
 #Compile the package:
-make
+make 2>$ERROR
 #Using the -j4 make option speeds up the tests, even on systems with only one processor, due to internal delays in
 #individual tests. To test the results, issue:
-make -j4 check
+make -j4 check 2>$ERROR
 #The test t/subobj.sh is known to fail in the LFS environment.
 #Install the package:
-make install
+make install 2>$ERROR
 
 cd ../
 rm -rf automake-1.16.2
 
 
 #/* Kmod-27 */
-echo "Installing Kmod-27 "
+echo "Installing Kmod-27 " 1>$CURR_PKG
 sleep 2
 tar -xvf kmod-27.tar.xz
 cd kmod-27
@@ -1130,13 +1131,13 @@ cd kmod-27
 	--sysconfdir=/etc		\
 	--with-rootlibdir=/lib		\
 	--with-xz			\
-	--with-zlib
+	--with-zlib 2>$ERROR
 #Compile the package:
-make
+make 2>$ERROR
 
 #Install the package and create symlinks for compatibility with Module-Init-Tools (the package that previously handled
 #Linux kernel modules):
-make install
+make install 2>$ERROR
 for target in depmod insmod lsmod modinfo modprobe rmmod; do
 ln -sfv ../bin/kmod /sbin/$target
 done
@@ -1146,20 +1147,20 @@ cd ../
 rm -rf kmod-27
 
 #/* Libelf from Elfutils-0.180 */
-echo " Installing Libelf from Elfutils-0.180 "
+echo " Installing Libelf from Elfutils-0.180 " 1>$CURR_PKG
 sleep 2
 tar -xvf elfutils-0.180.tar.bz2
 cd elfutils-0.180
 
 #Prepare Libelf for compilation:
-./configure --prefix=/usr --disable-debuginfod --libdir=/lib
+./configure --prefix=/usr --disable-debuginfod --libdir=/lib 2>$ERROR
 #Compile the package:
-make
+make 2>$ERROR
 #To test the results, issue:
-make check
+make check 2>$ERROR
 #Install only Libelf:
-make -C libelf install
-install -vm644 config/libelf.pc /usr/lib/pkgconfig
+make -C libelf install 2>$ERROR
+install -vm644 config/libelf.pc /usr/lib/pkgconfig 2>$ERROR
 rm /lib/libelf.a
 
 cd ../
@@ -1167,26 +1168,26 @@ rm -rf elfutils-0.180
 
 
 #/* Libffi-3.3 */
-echo "Installing Libffi-3.3 ..."
+echo "Installing Libffi-3.3 ..." 1>$CURR_PKG
 sleep 2
 tar -xvf libffi-3.3.tar.gz
 cd libffi-3.3
 
 #Prepare libffi for compilation:
-./configure --prefix=/usr --disable-static --with-gcc-arch=native
+./configure --prefix=/usr --disable-static --with-gcc-arch=native 2>$ERROR
 #Compile the package:
-make 
+make  2>$ERROR
 #To test the results, issue:
-make check 
+make check 2>$ERROR
 #Install the package:
-make install
+make install 2>$ERROR
 
 cd ../
 rm -rf libffi-3.3
 
 
 #/* OpenSSL-1.1.1g  */
-echo "Installing  OpenSSL-1.1.1g ..."
+echo "Installing  OpenSSL-1.1.1g ..." 1>$CURR_PKG
 sleep 2
 tar -xvf openssl-1.1.1g.tar.gz
 cd openssl-1.1.1g
@@ -1195,15 +1196,15 @@ cd openssl-1.1.1g
 	--openssldir=/etc/ssl		\
 	--libdir=lib			\
 	shared				\
-	zlib-dynamic
+	zlib-dynamic 2>$ERROR
 #Compile the package:
-make
+make 2>$ERROR
 #To test the results, issue:
-make test
+make test 2>$ERROR
 
 #Install the package:
 sed -i '/INSTALL_LIBS/s/libcrypto.a libssl.a//' Makefile
-make MANSUFFIX=ssl install
+make MANSUFFIX=ssl install 2>$ERROR
 #If desired, install the documentation:
 mv -v /usr/share/doc/openssl /usr/share/doc/openssl-1.1.1g
 cp -vfr doc/* /usr/share/doc/openssl-1.1.1g
@@ -1214,7 +1215,7 @@ rm -rf openssl-1.1.1g
 
 
 #/* Python-3.8.5 */
-echo "Installing Python-3.8.5 ..."
+echo "Installing Python-3.8.5 ..." 1>$CURR_PKG
 sleep 2
 tar -xvf Python-3.8.5.tar.xz
 cd Python-3.8.5
@@ -1223,11 +1224,11 @@ cd Python-3.8.5
 	--enable-shared			\
 	--with-system-expat		 \
 	--with-system-ffi		\
-	--with-ensurepip=yes
+	--with-ensurepip=yes 2>$ERROR
 #Compile the package:
-make
+make 2>$ERROR
 #Install the package:
-make install
+make install 2>$ERROR
 chmod -v 755 /usr/lib/libpython3.8.so
 chmod -v 755 /usr/lib/libpython3.so
 ln -sfv pip3.8 /usr/bin/pip3
@@ -1243,7 +1244,7 @@ rm -rf Python-3.8.5
 
 
 #/* Ninja-1.10.0 */
-echo "Installing Ninja-1.10.0 ..."
+echo "Installing Ninja-1.10.0 ..." 1>$CURR_PKG
 sleep 2
 tar -xvf ninja-1.10.0.tar.gz
 cd ninja-1.10.0.
@@ -1258,10 +1259,10 @@ sed -i '/int Guess/a \
 ' src/ninja.cc
 
 #Build Ninja with:
-python3 configure.py --bootstrap
+python3 configure.py --bootstrap 2>$ERROR
 #To test the results, issue:
-./ninja ninja_test
-./ninja_test --gtest_filter=-SubprocessTest.SetWithLots
+./ninja ninja_test 2>$ERROR
+./ninja_test --gtest_filter=-SubprocessTest.SetWithLots 2>$ERROR
 #Install the package:
 install -vm755 ninja /usr/bin/
 install -vDm644 misc/bash-completion /usr/share/bash-completion/completions/ninja
@@ -1272,15 +1273,15 @@ rm -rf ninja-1.10.0
 
 
 #/*Meson-0.55.0 */
-echo "Installing Meson-0.55.0 ..."
+echo "Installing Meson-0.55.0 ..." 1>$CURR_PKG
 sleep 2
 tar -xvf meson-0.55.0.tar.gz
 cd meson-0.55.0
 #Compile Meson with the following command:
-python3 setup.py build
+python3 setup.py build 2>$ERROR
 #This package does not come with a test suite.
 #Install the package:
-python3 setup.py install --root=dest
+python3 setup.py install --root=dest 2>$ERROR
 cp -rv dest/* /
 
 
@@ -1289,22 +1290,22 @@ rm -rf meson-0.55.0
 
 
 #/* Coreutils-8.32 */
-echo "Installing Coreutils-8.32 ..."
+echo "Installing Coreutils-8.32 ..." 1>$CURR_PKG
 sleep 2
 tar -xvf coreutils-8.32.tar.xz
 cd coreutils-8.32
-patch -Np1 -i ../coreutils-8.32-i18n-1.patch
+patch -Np1 -i ../coreutils-8.32-i18n-1.patch 2>$ERROR
 #Suppress a test which on some machines can loop forever:
-sed -i '/test.lock/s/^/#/' gnulib-tests/gnulib.mk
+sed -i '/test.lock/s/^/#/' gnulib-tests/gnulib.mk 2>$ERROR
 #Now prepare Coreutils for compilation:
 autoreconf -fiv
 FORCE_UNSAFE_CONFIGURE=1 ./configure	 \
 	--prefix=/usr					\
-	--enable-no-install-program=kill,uptime
+	--enable-no-install-program=kill,uptime 2>$ERROR
 #Compile the package:
-make
+make 2>$ERROR
 #Now the test suite is ready to be run. First, run the tests that are meant to be run as user root:
-make NON_ROOT_USERNAME=tester check-root
+make NON_ROOT_USERNAME=tester check-root 2>$ERROR
 
 echo "We're going to run the remainder of the tests as the tester user. Certain tests require that the user be a member of
 more than one group. So that these tests are not skipped, add a temporary group and make the user tester a part of it:"
@@ -1316,7 +1317,7 @@ su tester -c "PATH=$PATH make RUN_EXPENSIVE_TESTS=yes check"
 echo "Removing  the temporary group:"
 sed -i '/dummy/d' /etc/group
 #Install the package:
-make install
+make install 2>$ERROR
 #Move programs to the locations specified by the FHS:
 mv -v /usr/bin/{cat,chgrp,chmod,chown,cp,date,dd,df,echo} /bin
 mv -v /usr/bin/{false,ln,ls,mkdir,mknod,mv,pwd,rm} /bin
@@ -1331,19 +1332,19 @@ rm -rf coreutils-8.32
 
 
 #/* Check-0.15.2 */
-echo "Installing Check-0.15.2 ..."
+echo "Installing Check-0.15.2 ..." 1>$CURR_PKG
 sleep 2
 tar -xvf check-0.15.2.tar.gz
 cd check-0.15.2
 #Prepare Check for compilation:
-./configure --prefix=/usr --disable-static
+./configure --prefix=/usr --disable-static 2>$ERROR
 #Build the package:
-make
+make 2>$ERROR
 #Compilation is now complete. To run the Check test suite, issue the following command:
-make check
+make check 2>$ERROR
 #Note that the Check test suite may take a relatively long (up to 4 SBU) time.
 #Install the package:
-make docdir=/usr/share/doc/check-0.15.2 install
+make docdir=/usr/share/doc/check-0.15.2 install 2>$ERROR
 
 
 cd ../
@@ -1351,38 +1352,38 @@ rm -rf check-0.15.2
 
 
 #/* Diffutils-3.7 */
-echo "Installing Diffutils-3.7 ..."
+echo "Installing Diffutils-3.7 ..." 1>$CURR_PKG
 sleep 2
 tar -xvf diffutils-3.7.tar.xz
 cd diffutils-3.7
 #Prepare Diffutils for compilation:
-./configure --prefix=/usr
+./configure --prefix=/usr 2>$ERROR
 #Compile the package:
-make
+make 2>$ERROR
 #To test the results, issue:
-make check
+make check 2>$ERROR
 #Install the package:
-make install
+make install 2>$ERROR
 
 cd ../
 rm -rf diffutils-3.7
 
 
 #/* Gawk-5.1.0 */
-echo "Installing Gawk-5.1.0 ..."
+echo "Installing Gawk-5.1.0 ..." 1>$CURR_PKG
 sleep 2
 tar -xvf gawk-5.1.0.tar.xz
 cd gawk-5.1.0
 #First, ensure some unneeded files are not installed:
 sed -i 's/extras//' Makefile.in
 #Prepare Gawk for compilation:
-./configure --prefix=/usr
+./configure --prefix=/usr 2>$ERROR
 #Compile the package:
-make
+make 2>$ERROR
 #To test the results, issue:
-make check
+make check 2>$ERROR
 #Install the package:
-make install
+make install 2>$ERROR
 #If desired, install the documentation:
 mkdir -v /usr/share/doc/gawk-5.1.0
 cp -v doc/{awkforai.txt,*.{eps,pdf,jpg}} /usr/share/doc/gawk-5.1.0
@@ -1393,19 +1394,19 @@ rm -rf gawk-5.1.0
 
 
 #/* Findutils-4.7.0 */
-echo "Installing Findutils-4.7.0 ..."
+echo "Installing Findutils-4.7.0 ..." 1>$CURR_PKG
 sleep 2
 tar -xvf findutils-4.7.0.tar.xz
 cd findutils-4.7.0
 #Prepare Findutils for compilation:
-./configure --prefix=/usr --localstatedir=/var/lib/locate
+./configure --prefix=/usr --localstatedir=/var/lib/locate 2>$ERROR
 #Compile the package:
-make
+make 2>$ERROR
 #To test the results, issue:
 chown -Rv tester .
 su tester -c "PATH=$PATH make check"
 #Install the package:
-make install
+make install 2>$ERROR
 #Some packages in BLFS and beyond expect the find program in /bin, so make sure it's placed there:
 mv -v /usr/bin/find /bin
 sed -i 's|find:=${BINDIR}|find:=/bin|' /usr/bin/updatedb
@@ -1414,24 +1415,24 @@ cd ../
 rm -rf findutils-4.7.0
 
 #/* Groff-1.22.4 */
-echo "Installing Groff-1.22.4 .."
+echo "Installing Groff-1.22.4 .." 1>$CURR_PKG
 sleep 2
 tar -xvf groff-1.22.4.tar.gz
 cd groff-1.22.4
 #Prepare Groff for compilation:
-PAGE=A4 ./configure --prefix=/usr
+PAGE=A4 ./configure --prefix=/usr 2>$ERROR
 #This package does not support parallel build. Compile the package:
-make -j1
+make -j1 2>$ERROR
 #This package does not come with a test suite.
 #Install the package:
-make install
+make install 2>$ERROR
 
 cd ../
 rm -rf groff-1.22.4
 
 
 #/*GRUB-2.04 */
-echo "Installing GRUB-2.04 ..."
+echo "Installing GRUB-2.04 ..." 1>$CURR_PKG
 sleep 2
 tar -xvf grub-2.04.tar.xz
 cd grub-2.04
@@ -1440,12 +1441,12 @@ cd grub-2.04
 	--sbindir=/sbin			\
 	--sysconfdir=/etc		\
 	--disable-efiemu		\
-	--disable-werror
+	--disable-werror 2>$ERROR
 #Compile the package:
-make
+make 2>$ERROR
 #This package does not come with a test suite.
 #Install the package:
-make install
+make install 2>$ERROR
 mv -v /etc/bash_completion.d/grub /usr/share/bash-completion/completions
 
 cd ../
@@ -1453,35 +1454,35 @@ rm -rf grub-2.04
 
 
 #/*Less-551 */
-echo "Installing Less-551 ..."
+echo "Installing Less-551 ..." 1>$CURR_PKG
 sleep 2
 tar -xvf less-551.tar.gz
 cd less-551
 #Prepare Less for compilation:
-./configure --prefix=/usr --sysconfdir=/etc
+./configure --prefix=/usr --sysconfdir=/etc 2>$ERROR
 #Compile the package:
-make
+make 2>$ERROR
 #This package does not come with a test suite.
 #Install the package:
-make install
+make install 2>$ERROR
 
 cd ../
 rm -rf less-551
 
 
 #/* Gzip-1.10 */
-echo "Installing Gzip-1.10 ..."
+echo "Installing Gzip-1.10 ..." 1>$CURR_PKG
 sleep 2
 tar -xvf gzip-1.10.tar.xz
 cd gzip-1.10
 #Prepare Gzip for compilation:
-./configure --prefix=/usr
+./configure --prefix=/usr 2>$ERROR
 #Compile the package:
-make
+make 2>$ERROR
 #To test the results, issue:
-make check
+make check 2>$ERROR
 #Install the package:
-make install
+make install 2>$ERROR
 #Move a program that needs to be on the root filesystem:
 mv -v /usr/bin/gzip /bin
 
@@ -1490,7 +1491,7 @@ rm -rf gzip-1.10
 
 
 #/* IPRoute2-5.8.0 */
-echo "Installing IPRoute2-5.8.0 ..."
+echo "Installing IPRoute2-5.8.0 ..." 1>$CURR_PKG
 sleep 2
 tar -xvf iproute2-5.8.0.tar.xz
 cd iproute2-5.8.0
@@ -1500,28 +1501,28 @@ rm -fv man/man8/arpd.8
 #iptables.html.
 sed -i 's/.m_ipt.o//' tc/Makefile
 #Compile the package:
-make
+make 2>$ERROR
 #This package does not have a working test suite.
 #Install the package:
-make DOCDIR=/usr/share/doc/iproute2-5.8.0 install
+make DOCDIR=/usr/share/doc/iproute2-5.8.0 install 2>$ERROR
 
 cd ../
 rm -rf iproute2-5.8.0
 
 #/* Kbd-2.3.0 */
-echo "Installing Kbd-2.3.0 ..."
+echo "Installing Kbd-2.3.0 ..." 1>$CURR_PKG
 sleep 2
 tar -xvf kbd-2.3.0.tar.xz
 cd kbd-2.3.0
-patch -Np1 -i ../kbd-2.3.0-backspace-1.patch
+patch -Np1 -i ../kbd-2.3.0-backspace-1.patch 2>$ERROR
 #Prepare Kbd for compilation:
-./configure --prefix=/usr --disable-vlock
+./configure --prefix=/usr --disable-vlock 2>$ERROR
 #Compile the package:
-make
+make 2>$ERROR
 #To test the results, issue:
-make check
+make check 2>$ERROR
 #Install the package:
-make install
+make install 2>$ERROR
 #Remove an internal library installed unintentionally:
 rm -v /usr/lib/libtswrap.{a,la,so*}
 #If desired, install the documentation:
@@ -1533,65 +1534,65 @@ rm -rf kbd-2.3.0
 
 
 #/* Libpipeline-1.5.3 */
-echo "Installing Libpipeline-1.5.3 ..."
+echo "Installing Libpipeline-1.5.3 ..." 1>$CURR_PKG
 sleep 2
 tar -xvf libpipeline-1.5.3.tar.gz
 cd libpipeline-1.5.3
 #Prepare Libpipeline for compilation:
-./configure --prefix=/usr
+./configure --prefix=/usr 2>$ERROR
 #Compile the package:
-make
+make 2>$ERROR
 #To test the results, issue:
-make check
+make check 2>$ERROR
 #Install the package:
-make install
+make install 2>$ERROR
 
 cd ../
 rm -rf libpipeline-1.5.3
 
 
 #/* Make-4.3 */
-echo "Installing Make-4.3 ..."
+echo "Installing Make-4.3 ..." 1>$CURR_PKG
 sleep 2
 tar -xvf make-4.3.tar.gz
 cd make-4.3
 #Prepare Make for compilation:
-./configure --prefix=/usr
+./configure --prefix=/usr 2>$ERROR
 #Compile the package:
-make
+make 2>$ERROR
 #To test the results, issue:
-make check
+make check 2>$ERROR
 #Install the package:
-make install
+make install 2>$ERROR
 
 cd ../
 rm -rf make-4.3
 
 
 #/* Patch-2.7.6 */
-echo "Installing Patch-2.7.6 "
+echo "Installing Patch-2.7.6 " 1>$CURR_PKG
 sleep 2
 tar -xvf patch-2.7.6.tar.xz
 cd patch-2.7.6
 #Prepare Patch for compilation:
-./configure --prefix=/usr
+./configure --prefix=/usr 2>$ERROR
 #Compile the package:
-make
+make 2>$ERROR
 #To test the results, issue:
-make check
+make check 2>$ERROR
 #Install the package:
-make install
+make install 2>$ERROR
 
 cd ../
 rm -rf patch-2.7.6
 
 #/*Man-DB-2.9.3 */
-echo "Installing Man-DB-2.9.3 ..."
+echo "Installing Man-DB-2.9.3 ..." 1>$CURR_PKG
 sleep 2
 tar -xvf man-db-2.9.3.tar.xz
 cd man-db-2.9.3
 #Prepare Man-DB for compilation:
-sed -i '/find/s@/usr@@' init/systemd/man-db.service.in
+sed -i '/find/s@/usr@@' init/systemd/man-db.service.in 2>$ERROR
 ./configure --prefix=/usr			\
 	--docdir=/usr/share/doc/man-db-2.9.3	\
 	--sysconfdir=/etc			\
@@ -1599,56 +1600,56 @@ sed -i '/find/s@/usr@@' init/systemd/man-db.service.in
 	--enable-cache-owner=bin		\
 	--with-browser=/usr/bin/lynx		\
 	--with-vgrind=/usr/bin/vgrind		\
-	--with-grap=/usr/bin/grap
+	--with-grap=/usr/bin/grap 2>$ERROR
 #Compile the package:
-make
+make 2>$ERROR
 #To test the results, issue:
-make check
+make check 2>$ERROR
 #Install the package:
-make install
+make install 2>$ERROR
 
 cd ../
 rm -rf man-db-2.9.3
 
 
 #/* Tar-1.32 */
-echo "Installing Tar-1.32 ..."
+echo "Installing Tar-1.32 ..." 1>$CURR_PKG
 sleep 2
 tar -xvf tar-1.32.tar.xz
 cd tar-1.32
 #Prepare Tar for compilation:
 FORCE_UNSAFE_CONFIGURE=1 \
 ./configure --prefix=/usr \
-	--bindir=/bin
+	--bindir=/bin 2>$ERROR
 #Compile the package:
-make
+make 2>$ERROR
 #To test the results (about 3 SBU), issue:
-make check
+make check 2>$ERROR
 #One test, capabilities: binary store/restore, is known to fail.
 #Install the package:
-make install
-make -C doc install-html docdir=/usr/share/doc/tar-1.32
+make install 2>$ERROR
+make -C doc install-html docdir=/usr/share/doc/tar-1.32 2>$ERROR
 
 cd ../
 rm -rf tar-1.32
 
 
 #/* Texinfo-6.7 */
-echo "Installing Texinfo-6.7 ..."
+echo "Installing Texinfo-6.7 ..." 1>$CURR_PKG
 sleep 2
 tar -xvf texinfo-6.7.tar.xz
 cd texinfo-6.7
 
 #Prepare Texinfo for compilation:
-./configure --prefix=/usr --disable-static
+./configure --prefix=/usr --disable-static 2>$ERROR
 #Compile the package:
-make
+make 2>$ERROR
 #To test the results, issue:
-make check
+make check 2>$ERROR
 #Install the package:
-make install
+make install 2>$ERROR
 #Optionally, install the components belonging in a TeX installation:
-make TEXMF=/usr/share/texmf install-tex
+make TEXMF=/usr/share/texmf install-tex 2>$ERROR
 
 pushd /usr/share/info
 	rm -v dir
@@ -1662,22 +1663,22 @@ rm -rf texinfo-6.7
 
 
 #/* Vim-8.2.1361 */
-echo "Installing Vim-8.2.1361 ...."
+echo "Installing Vim-8.2.1361 ...." 1>$CURR_PKG
 sleep 2
 tar -xvf vim-8.2.1361.tar.gz
 cd vim-8.2.1361
 #First, change the default location of the vimrc configuration file to /etc:
 echo '#define SYS_VIMRC_FILE "/etc/vimrc"' >> src/feature.h
 #Prepare vim for compilation:
-./configure --prefix=/usr
+./configure --prefix=/usr 2>$ERROR
 #Compile the package:
-make
+make 2>$ERROR
 #To prepare the tests, ensure that user tester can write to the source tree:
 chown -Rv tester .
 #Now run the tests as user tester:
-su tester -c "LANG=en_US.UTF-8 make -j1 test" &> vim-test.log
-#Install the package:
-make install
+su tester -c "LANG=en_US.UTF-8 make -j1 test" &> vim-test.log 
+#Install the package: 
+make install 2>$ERROR
 #Many users are used to using vi instead of vim. To allow execution of vim when users habitually enter vi, create a
 #symlink for both the binary and the man page in the provided languages:
 ln -sv vim /usr/bin/vi
@@ -1714,7 +1715,7 @@ rm -rf vim-8.2.1361
 
 
 #/* Systemd-246 */
-echo "Installing Systemd-246 ..."
+echo "Installing Systemd-246 ..." 1>$CURR_PKG
 sleep 2
 tar -xvf systemd-246.tar.gz
 cd systemd-246
@@ -1777,7 +1778,7 @@ rm -rf systemd-246
 
 
 #/* D-Bus-1.12.20 */
-echo "Installing D-Bus-1.12.20 ..."
+echo "Installing D-Bus-1.12.20 ..." 1>$CURR_PKG
 sleep 2
 tar -xvf dbus-1.12.20.tar.gz
 cd dbus-1.12.20
@@ -1789,25 +1790,25 @@ cd dbus-1.12.20
 	--disable-doxygen-docs			\
 	--disable-xml-docs			\
 	--docdir=/usr/share/doc/dbus-1.12.20	 \
-	--with-console-auth-dir=/run/console
+	--with-console-auth-dir=/run/console 2>$ERROR
 #Compile the package:
-make
+make 2>$ERROR
 #Install the package:
-make install
+make install 2>$ERROR
 #The shared library needs to be moved to /lib, and as a result the .so file in /usr/lib will need to be recreated:
 mv -v /usr/lib/libdbus-1.so.* /lib
 ln -sfv ../../lib/$(readlink /usr/lib/libdbus-1.so) /usr/lib/libdbus-1.so
 #Create a symlink so that D-Bus and systemd can use the same machine-id file:
 ln -sfv /etc/machine-id /var/lib/dbus
 #Move the socket file to /run instead of the deprecated /var/run:
-sed -i 's:/var/run:/run:' /lib/systemd/system/dbus.socket
+sed -i 's:/var/run:/run:' /lib/systemd/system/dbus.socket 2>$ERROR
 
 cd ../
 rm -rf dbus-1.12.20
 
 
 #/* Procps-ng-3.3.16 */
-echo "Installing Procps-ng-3.3.16 ..."
+echo "Installing Procps-ng-3.3.16 ..." 1>$CURR_PKG
 sleep 2
 tarv -xvf procps-ng-3.3.16.tar.xz
 cd procps-ng-3.3.16
@@ -1818,13 +1819,13 @@ Prepare procps-ng for compilation:
 	--docdir=/usr/share/doc/procps-ng-3.3.16	\
 	--disable-static		\
 	--disable-kill			\
-	--with-systemd
+	--with-systemd 2>$ERROR
 #Compile the package:
-make
+make 2>$ERROR
 #To run the test suite, run:
-make check
+make check 2>$ERROR
 #Install the package:
-make install
+make install 2>$ERROR
 #Finally, move essential libraries to a location that can be found if /usr is not mounted.
 mv -v /usr/lib/libprocps.so.* /lib
 ln -sfv ../../lib/$(readlink /usr/lib/libprocps.so) /usr/lib/libprocps.so
@@ -1833,7 +1834,7 @@ cd ../
 rm -rf procps-ng-3.3.16
 
 #/*Util-linux-2.36 */
-echo "Installing Util-linux-2.36 .."
+echo "Installing Util-linux-2.36 .." 1>$CURR_PKG
 sleep 2
 tar -xvf util-linux-2.36.tar.xz
 cd util-linux-2.36
@@ -1851,18 +1852,18 @@ mkdir -pv /var/lib/hwclock
 	--disable-runuser				\
 	--disable-pylibmount 				\
 	--disable-static				\
-	--without-python
+	--without-python 2>$ERROR
 #Compile the package:
-make
+make 2>$ERROR
 #Install the package:
-make install
+make install 2>$ERROR
 
 
 cd ../
 rm -rf util-linux-2.36
 
 #/* E2fsprogs-1.45.6 */
-echo "Installing E2fsprogs-1.45.6 ..."
+echo "Installing E2fsprogs-1.45.6 ..." 1>$CURR_PKG
 sleep 2
 tar -xvf e2fsprogs-1.45.6.tar.gz
 cd e2fsprogs-1.45.6
@@ -1877,15 +1878,15 @@ cd build
 	--disable-libblkid		\
 	--disable-libuuid		\
 	--disable-uuidd			\
-	--disable-fsck
+	--disable-fsck 2>$ERROR
 #Compile the package:
-make
+make 2>$ERROR
 #To run the tests, issue:
-make check
+make check 2>$ERROR
 #On a spinning disk, the tests take a little more than 4 SBUs. They can be much shorter on an SSD (down to about
 #1.5 SBUs).
 #Install the package:
-make install
+make install 2>$ERROR
 Make the installed static libraries writable so debugging symbols can be removed later:
 chmod -v u+w /usr/lib/{libcom_err,libe2p,libext2fs,libss}.a
 #This package installs a gzipped .info file but doesn't update the system-wide dir file. Unzip this file and then update
@@ -1901,7 +1902,7 @@ cd ../../
 rm -rf e2fsprogs-1.45.6
 
 #/* Stripping Again  */
-echo "Stripping Again ..."
+echo "Stripping Again ..." 1>$CURR_PKG
 sleep 5
 #First place the debugging symbols for selected libraries in separate files. This debugging information is needed if
 #running regression tests that use valgrind or gdb later in BLFS.
@@ -1932,7 +1933,7 @@ find /{bin,sbin} /usr/{bin,sbin,libexec} -type f \
 
 
 #/* Cleaning Up */
-echo "Cleaning Up ..."
+echo "Cleaning Up ..." 1>$CURR_PKG
 sleep 5
 #Finally, clean up some extra files left around from running tests:
 rm -rf /tmp/*
@@ -1966,7 +1967,7 @@ rm -rf /tools
 #Finally, remove the temporary 'tester' user account created at the beginning of the previous chapter.
 userdel -r tester
 
-echo "DONE !!!"
+echo "DONE !!!" 1>$CURR_PKG
 #<------------------------------------------------------DONE --------------------------------------------------------->
 
 #/* Author */
