@@ -62,7 +62,7 @@ sleep
 	umask 022  \
 	LFS=/mnt/lfs  \
 	LC_ALL=POSIX  \
-	LFS_TGT=$(uname-r)-lfs-linux-gnu    \
+	LFS_TGT=$(uname -m)-lfs-linux-gnu    \
 	PATH=$LFS/tools:$PATH            \
 	export LFS LC_ALL LFS_TGT PATH       \
 	EOF
