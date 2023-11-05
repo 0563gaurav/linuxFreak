@@ -1,8 +1,7 @@
 
 all:
 	#bash ./scripts/Host_preperation.sh
-	bash ./scripts/Version_check.sh
-	bash ./scripts/Build_temporary_cross_toolchain.sh
+	bash -x ./scripts/Build_temporary_cross_toolchain.sh
 
 version-check:
 	bash ./scripts/Version_check.sh

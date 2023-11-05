@@ -21,15 +21,15 @@ sleep 3
 
 #/*Binutils*/
 echo "Binutils is being build " 1>$CURR_PKG
-tar -xvf binutils-2.35.tar.xz 2>$ERROR
-cd binutils-2.35 1>$ERROR
-mkdir -pv build 1>$ERROR
+tar -xf binutils-2.35.tar.xz 1> /dev/null
+cd binutils-2.35 
+mkdir -pv build 
 cd build
-../configure --prefix=$LFS/tools --with-sysroot=$LFS --target=$LFS_TGT --disable-nls --disable-werror 2>$ERROR 
-make  2>$ERROR
-make install  2>$ERROR
-cd ../../ 2>$ERROR
-rm -rf binutils-2.53 2>$ERROR
+../configure --prefix=$LFS/tools --with-sysroot=$LFS --target=$LFS_TGT --disable-nls --disable-werror 1> /dev/null
+make  1> /dev/null
+make install 1> /dev/null
+cd ../../ 
+rm -rf binutils-2.53 
 
 
 #/*GCC */
@@ -41,73 +41,52 @@ echo "Starting with gcc package ...." 1>$CURR_PKG
 sleep 3
 
 
-tar -xvf gcc-10.2.0.tar.xz 2>$ERROR
-cd gcc-10.2.0 2>$ERROR
+tar -xf gcc-10.2.0.tar.xz 1> /dev/null
+cd gcc-10.2.0 1> /dev/null
 #? dependency resolve 
 #gcc package dependes on mpc , mpfr and gmp packages 
-tar -xvf ../mpc-1.1.0.tar.gz 2>$ERROR
-mv mpc-1.1.0 mpc 2>$ERROR
-tar -xvf ../gmp-6.2.0.tar.xz 2>$ERROR
-mv gmp-6.2.0 gmp 2>$ERROR
-tar -xvf ../mpfr-4.1.0.tar.xz 2>$ERROR
-mv mpfr-4.1.0 mpfr 2>$ERROR
+tar -xf ../mpc-1.1.0.tar.gz 1> /dev/null
+mv mpc-1.1.0 mpc 1> /dev/null
+tar -xf ../gmp-6.2.0.tar.xz 1> /dev/null
+mv gmp-6.2.0 gmp 1> /dev/null
+tar -xf ../mpfr-4.1.0.tar.xz 1>/dev/null
+mv mpfr-4.1.0 mpfr 1 > /dev/null
 #on x84_64 hosts, set the defoult dirctory  name for 64-bit libraries to "lib"
 case $(uname -m) in
 	x86_64) 
-		sed -e '/m64=/s/lib64/lib/' -i.org gcc/config/i386/t-linux64 1>$ERROR
+		sed -e '/m64=/s/lib64/lib/' -i.org gcc/config/i386/t-linux64 1> /dev/null
 	;;
 esac
 #dependency are resolved , now procceed with compilation 
 mkdir build
 cd build
-../configure --target=$LFS_TGT	\
-	--prefix=$LFS/tools	\
-	--with-glibc-version=2.11 \
-	--with-sysroot=$LFS	  \
-	--with-newlib		  \
-	--without-headers	  \
-	--enable-initfini-array	  \
-	--disable-nls		  \
-	--disable-shared	  \
-	--disable-multilib	  \
-	--disable-decimal-float   \
-	--disable-threads	  \
-	--disable-libatomic	  \
-	--disable-libgomp	  \
-	--disable-libquadmath	  \
-	--disable-libssp	  \
-	--disable-libvtv	  \
-	--disable-libstdcxx	  \
-	--enable-lanuages=c,c++  2>$ERROR
-make -j8 2>$ERROR
-make install 2>$ERROR
+../configure --target=$LFS_TGT	--prefix=$LFS/tools --with-glibc-version=2.11 --with-sysroot=$LFS --with-newlib	--without-headers --enable-initfini-array --disable-nls --disable-share --disable-multilib --disable-decimal-float --disable-threads --disable-libatomic --disable-libgomp --disable-libquadmath --disable-libssp --disable-libvtv --disable-libstdcxx --enable-lanuages=c,c++  1> /dev/null
+make 1>/dev/null
+make install 1> /dev/null
 #Note 
 cd ../
-cat gcc/limitx.h gcc/glimits.h gcc/limity.h > \
-	`dirname $($LFS_TGT-gcc -print-libgcc-file-name) ` /install-tools/include/limits.h 2>$ERROR
+cat gcc/limitx.h gcc/glimits.h gcc/limity.h `dirname $($(LFS_TGT)-gcc -print-libgcc-file-name) ` /install-tools/include/limits.h 1> /dev/null
 
 cd ../
 rm -rf gcc-10.2.0
-
-
 exit
 
 #/* linux API  headers */
 echo "stating with installing linux API" 1>$CURR_PKG
 sleep 3
 
-tar -xvf linux-5.8.3.tar.xz 2>$ERROR
-cd linux-5.8.3/ 2>$ERROR
-make mrproper 2>$ERROR
-make headers 2>$ERROR
-find usr/include -name '.*' -delete 2>$ERROR
-rm -rf usr/include/Makefile 2>$ERROR
-cp -rv usr/include/ $LFS/usr 2>$ERROR
+tar -xf linux-5.8.3.tar.xz 1> /dev/null
+cd linux-5.8.3/ 
+make mrproper 1> /dev/null
+make headers 1> /dev/null
+find usr/include -name '.*' -delete 1> /dev/null
+rm -rf usr/include/Makefile 
+cp -rv usr/include/ $LFS/usr 1> /dev/null
 
 cd ../
 rm -rf linux-5.8.3
 
-
+echo " Linux API headers Done "
 
 
 
@@ -118,70 +97,57 @@ sleep 3
 #? creating a symbolic link for LSB compliance 
 case $(uname -r) in
 	i?86) ln -sfv ld-linux.so.2 $LFS/lib/ld-lsb.so.3   ;; 
-	x86_64) ln -sfv ../lib/ld-linux-x86-64.so.2 $LFS/lib64 2>$ERROR
-		ln -svf ../lib/ld-linux-x86-64.so.2 $LFS/lib64/ld-lsb-x8-64.so3 2>$ERROR
+	x86_64) ln -sfv ../lib/ld-linux-x86-64.so.2 $LFS/lib64 1 > /dev/null
+		ln -svf ../lib/ld-linux-x86-64.so.2 $LFS/lib64/ld-lsb-x8-64.so3 1> /dev/null
 		;;
 esac 
 
 
 
 
-tar -xvf glibc-2.32.tar.xz 2>$ERROR
-cd glibc-2.322 2>$ERROR
+tar -xf glibc-2.32.tar.xz
+cd glibc-2.322 
 #Patching the glibc
-patch -Np1 -i ../glibc-2.32-fhs-1.patch 2>$ERROR
+patch -Np1 -i ../glibc-2.32-fhs-1.patch 1> /dev/null
 
-mkdir -v build 2>$ERROR
+mkdir -v build 
 cd build
-../configure   			\
-	--prefix=/usr		\
-	--host=$LFS_TGT		\
-	--build=$(./scripts/config.guess)	\
-	--enable-kernel=3.2	\
-	--with-headers=$LFS/usr/include		\
-	lib_cv_slibdir=/lib 2>$ERROR 
+../configure  --prefix=/usr --host=$LFS_TGT --build=$(./scripts/config.guess) --enable-kernel=3.2 --with-headers=$LFS/usr/include lib_cv_slibdir=/lib 1> /dev/null
 
-make -j8 2>$ERROR
-make DESTDIR=$LFS install 2>$ERROR 
+make -j8 1> /dev/null
+make DESTDIR=$LFS install 1> /dev/null 
 
 cd ../..
 rm -rf glibc-2.32
 
 #At this point of time to stop and ensure that the basic function( compling and linking ) of the new programs are working as expected.
 #To perform the sanity check , run the following commands
-echo "Perfoeming test on toolchain " 2>$ERROR
-echo 'init main() {}' >dummy.c 2>$ERROR
-$LFS_TGT-gcc dummy.c 2>$ERROR
-readelf -l a.out | grep '/ld-linux' 2>$ERROR
+echo "Perfoeming test on toolchain " 
+echo 'init main() {}' >dummy.c 
+$LFS_TGT-gcc dummy.c 1> /dev/null
+readelf -l a.out | grep '/ld-linux' 1> /dev/null
 #put put of the program should be " [Requesting program interpreter: /lib64/ld-linux-x86-64.so.2 ]
-rm  dummy.c a.out 2>$ERROR
+rm  dummy.c a.out 
 
 
 
 #? Now that our toolchain is complete.
 #finilize the installation of limits.h header.
 #for this run the utility 
-$LFS/tools/libexec/gcc/$LFS_TGT/10.2/install-tools/mkheaders 2>$ERROR
+$LFS/tools/libexec/gcc/$LFS_TGT/10.2/install-tools/mkheaders 1> /dev/null
 
 
 #/* libstdc++ from GCC-10.2.0, pass 1
 echo " libstdc++ is being build ..." 1>$CURR_PKG
 sleep 3
-tar -xvf gcc-10.2.0.tar.xz 2>$ERROR
-cd gcc-10.2.0 2>$ERROR
-mkdir build 2>$ERROR
-cd build 2>$ERROR
-../configure 			\
-	--host=$LFS_TGT		\
-	--build=$(../config.guess)	\
-	--prefix=/usr			\
-	--disable-multilib		\
-	--disable-nls			\
-	--disbale-libstdcxx-pch		\
-	--with-gxx-include-dir=/tools/$LFS_TGT/include/c++/10.2.0 2>$ERROR  
+tar -xf gcc-10.2.0.tar.xz 1 > /dev/null
+cd gcc-10.2.0 
+mkdir build 
+cd build 
+../configure --host=$LFS_TGT --build=$(../config.guess)	--prefix=/usr --disable-multilib --disable-nls --disbale-libstdcxx-pch --with-gxx-include-dir=/tools/$LFS_TGT/include/c++/10.2.0 1> /dev/null  
 
-make -j8 2>$ERROR
-make DESTDIR=$LFS install 2>$ERROR
+make -j8 1> /dev/null
+make DESTDIR=$LFS install 1> /dev/null
 
 cd ../../
 rm -rf gcc-10.2.0

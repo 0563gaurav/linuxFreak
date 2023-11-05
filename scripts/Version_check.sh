@@ -31,6 +31,7 @@ else
 	echo " awk is not found "
 fi
 gcc --version | head -n1 
+g++ --version | head -n1
 echo -n  "GLIBC: " ; ldd --version | head -n1 | cut -d" " -f5
 grep --version | head -n1 
 gzip --version | head -n1
